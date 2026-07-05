@@ -1,0 +1,25 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { Database } from "./database.types";
+import { getSupabaseAnonKey, getSupabaseUrl } from "./env";
+
+export async function createClient() {
+  const cookieStore = cookies();
+
+  return createServerClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet, _headers) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Server Components cannot set cookies. Middleware keeps sessions fresh.
+        }
+      }
+    }
+  });
+}
