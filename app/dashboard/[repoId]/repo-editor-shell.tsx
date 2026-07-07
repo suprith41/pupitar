@@ -55,6 +55,17 @@ type EvalRunCaseResult = {
   verdict: "PASS" | "FAIL";
 };
 
+type MergeFlowState = {
+  branchId: string | null;
+  branchName: string;
+  versionId: string;
+  status: "running" | "ready" | "blocked" | "no-evals";
+  summary: { score: number; total: number } | null;
+  results: EvalRunCaseResult[] | null;
+  isMerging: boolean;
+  error: string;
+};
+
 function toBranchOption(branch: BranchRow, repoId: string): BranchOption {
   return {
     id: branch.id,
@@ -228,6 +239,11 @@ function getInlineDiffParts(oldLine: string, newLine: string) {
   return diffs as Array<[number, string]>;
 }
 
+function getMergeThresholdMessage(score: number, total: number) {
+  const threshold = Math.ceil(total * 0.8);
+  return `need ${threshold}/${total}`;
+}
+
 export default function RepoEditorShell({
   repo,
   initialVersions,
@@ -269,6 +285,8 @@ export default function RepoEditorShell({
   const [evalRunSummary, setEvalRunSummary] = useState<{ score: number; total: number } | null>(
     null
   );
+  const [mergeFlow, setMergeFlow] = useState<MergeFlowState | null>(null);
+  const [mergeMessage, setMergeMessage] = useState("");
   const [generatePurpose, setGeneratePurpose] = useState("");
   const [generateError, setGenerateError] = useState("");
   const [evalError, setEvalError] = useState("");
@@ -291,15 +309,17 @@ export default function RepoEditorShell({
   const [deployFeedback, setDeployFeedback] = useState(false);
   const commitFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deployFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mergeFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const orderedVersions = useMemo(() => sortVersionsNewestFirst(versions), [versions]);
+  const mainBranch = useMemo(() => branches.find((branch) => branch.is_main) ?? null, [branches]);
   const currentBranch = useMemo(() => {
     if (selectedBranchId == null) {
-      return branches.find((branch) => branch.is_main) ?? branches[0] ?? null;
+      return mainBranch ?? branches[0] ?? null;
     }
 
     return branches.find((branch) => branch.id === selectedBranchId) ?? branches[0] ?? null;
-  }, [branches, selectedBranchId]);
+  }, [branches, mainBranch, selectedBranchId]);
 
   const currentBranchVersions = useMemo(
     () => getBranchVersions(orderedVersions, currentBranch, currentBranch?.id ?? null),
@@ -324,6 +344,7 @@ export default function RepoEditorShell({
   const isDiffView = Boolean(diffSourceVersion && currentBranchLatestVersion);
   const canDeploy = Boolean(mostRecentVersion);
   const diffSourceVersionNumber = diffSourceVersion ? getVersionNumber(diffSourceVersion) : null;
+  const isMergeGateActive = Boolean(mergeFlow);
 
   useEffect(
     () => () => {
@@ -333,6 +354,10 @@ export default function RepoEditorShell({
 
       if (deployFeedbackTimer.current) {
         clearTimeout(deployFeedbackTimer.current);
+      }
+
+      if (mergeFeedbackTimer.current) {
+        clearTimeout(mergeFeedbackTimer.current);
       }
     },
     []
@@ -680,17 +705,7 @@ export default function RepoEditorShell({
     setEvalRunSummary(null);
 
     try {
-      const response = await fetch("/api/run-evals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo_id: repo.id, version_id: currentBranchLatestVersion.id })
-      });
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.detail || "Run evals failed.");
-      }
+      const payload = await requestEvalRun(currentBranchLatestVersion.id);
 
       setEvalRunResults(payload.results ?? []);
       setEvalRunSummary({
@@ -705,6 +720,26 @@ export default function RepoEditorShell({
     } finally {
       setIsRunningEvals(false);
     }
+  }
+
+  async function requestEvalRun(versionId: string) {
+    const response = await fetch("/api/run-evals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo_id: repo.id, version_id: versionId })
+    });
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(payload?.detail || "Run evals failed.");
+    }
+
+    return payload as {
+      score?: number;
+      total?: number;
+      results?: EvalRunCaseResult[];
+    };
   }
 
   async function createBranch(branchName: string) {
@@ -760,6 +795,181 @@ export default function RepoEditorShell({
     }
   }
 
+  function resetMergeFlow() {
+    setMergeFlow(null);
+    setMergeMessage("");
+  }
+
+  async function startMergeGate() {
+    if (!currentBranch || currentBranch.is_main) {
+      return;
+    }
+
+    if (!currentBranchLatestVersion) {
+      setEvalError("Commit a version on this branch before merging.");
+      return;
+    }
+
+    setActiveTab("editor");
+    setPreviewVersion(null);
+    setDiffVersionId(null);
+    setError("");
+    setStatus("");
+    setEvalError("");
+    setMergeMessage("");
+    const mergeVersionId = currentBranchLatestVersion.id;
+    setMergeFlow({
+      branchId: currentBranch.id,
+      branchName: currentBranch.name,
+      versionId: mergeVersionId,
+      status: "running",
+      summary: null,
+      results: null,
+      isMerging: false,
+      error: ""
+    });
+
+    if (evalCases.length === 0) {
+      setMergeFlow((current) =>
+        current
+          ? {
+              ...current,
+              status: "no-evals"
+            }
+          : current
+      );
+      return;
+    }
+
+    try {
+      const payload = await requestEvalRun(currentBranchLatestVersion.id);
+      const summary = {
+        score: payload.score ?? 0,
+        total: payload.total ?? evalCases.length
+      };
+      const results = payload.results ?? [];
+      const passedThreshold = summary.total === 0 ? true : summary.score >= summary.total * 0.8;
+
+      setEvalRunResults(results);
+      setEvalRunSummary(summary);
+      setMergeFlow((current) =>
+        current && current.versionId === mergeVersionId
+          ? {
+              ...current,
+              status: passedThreshold ? "ready" : "blocked",
+              summary,
+              results
+            }
+          : current
+      );
+
+      await refreshVersions();
+    } catch (mergeError) {
+      const message = mergeError instanceof Error ? mergeError.message : "Could not run merge evals.";
+      setMergeFlow((current) =>
+        current && current.versionId === mergeVersionId
+          ? {
+              ...current,
+              status: "blocked",
+              error: message
+            }
+          : current
+      );
+    }
+  }
+
+  async function confirmMerge() {
+    if (!mergeFlow || (mergeFlow.status !== "ready" && mergeFlow.status !== "no-evals")) {
+      return;
+    }
+
+    const sourceVersion = versions.find((version) => version.id === mergeFlow.versionId);
+    if (!sourceVersion) {
+      setMergeFlow((current) =>
+        current
+          ? {
+              ...current,
+              isMerging: false,
+              error: "Could not find the version to merge."
+            }
+          : current
+      );
+      return;
+    }
+
+    const mainBranchId = mainBranch?.id ?? null;
+    const supabase = createClient();
+
+    setMergeFlow((current) =>
+      current
+        ? {
+            ...current,
+            isMerging: true,
+            error: ""
+          }
+        : current
+    );
+
+    try {
+      const { data, error: insertError } = await supabase
+        .from("prompt_versions")
+        .insert({
+          repo_id: repo.id,
+          branch_id: mainBranchId,
+          content: sourceVersion.content,
+          commit_message: `Merged from ${mergeFlow.branchName}`,
+          model: sourceVersion.model,
+          temperature: sourceVersion.temperature,
+          max_tokens: sourceVersion.max_tokens,
+          parent_version_id: sourceVersion.id,
+          eval_score: mergeFlow.summary?.score ?? null,
+          eval_total: mergeFlow.summary?.total ?? null
+        })
+        .select(
+          "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+        )
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (!data) {
+        throw new Error("Merge insert did not return a row.");
+      }
+
+      setVersions((current) => [data, ...current]);
+      setSelectedBranchId(mainBranchId);
+      setPreviewVersion(null);
+      setDiffVersionId(null);
+      setCommitMessage("");
+      setStatus("");
+      setError("");
+      setContent(data.content);
+      setModel(data.model);
+      setTemperature(data.temperature);
+      setMaxTokens(data.max_tokens);
+      setActiveVersionId(data.id);
+      setMergeMessage("Merged into main");
+      if (mergeFeedbackTimer.current) {
+        clearTimeout(mergeFeedbackTimer.current);
+      }
+      mergeFeedbackTimer.current = setTimeout(() => setMergeMessage(""), 1500);
+      setMergeFlow(null);
+    } catch (mergeError) {
+      const message = mergeError instanceof Error ? mergeError.message : "Could not merge branch.";
+      setMergeFlow((current) =>
+        current
+          ? {
+              ...current,
+              isMerging: false,
+              error: message
+            }
+          : current
+      );
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
       <section className="flex min-w-0 flex-col gap-6">
@@ -777,6 +987,7 @@ export default function RepoEditorShell({
               currentBranch={currentBranch}
               onSelectBranch={syncEditorToBranch}
               onCreateBranch={createBranch}
+              onMergeIntoMain={startMergeGate}
             />
           </div>
 
@@ -826,7 +1037,15 @@ export default function RepoEditorShell({
               <span className="font-mono text-sm text-muted">/ prompt.md</span>
             </div>
 
-            {isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
+            {mergeMessage ? <p className="text-sm leading-6 text-muted">{mergeMessage}</p> : null}
+
+            {mergeFlow ? (
+              <MergeGatePanel
+                flow={mergeFlow}
+                onConfirm={confirmMerge}
+                onCancel={resetMergeFlow}
+              />
+            ) : isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
               <DiffViewPanel
                 sourceVersion={diffSourceVersion}
                 currentVersion={currentBranchLatestVersion}
@@ -1181,6 +1400,11 @@ export default function RepoEditorShell({
               {currentBranchVersions.map((version) => {
                 const isCurrent = previewVersion?.id === version.id || (!isPreviewing && activeVersionId === version.id);
                 const isMainVersion = isLegacyMainVersion(version, currentBranch?.is_main ? currentBranch.id : null);
+                const isMergeWithoutEvals =
+                  version.eval_score == null &&
+                  version.eval_total == null &&
+                  typeof version.commit_message === "string" &&
+                  version.commit_message.startsWith("Merged from ");
 
                 return (
                   <div
@@ -1207,6 +1431,10 @@ export default function RepoEditorShell({
                         {version.eval_score != null && version.eval_total != null ? (
                           <p className="mt-1 font-mono text-xs text-muted">
                             {version.eval_score}/{version.eval_total}
+                          </p>
+                        ) : isMergeWithoutEvals ? (
+                          <p className="mt-1 inline-flex rounded-sm border border-amber-900 bg-[#241f10] px-1.5 py-0.5 font-mono text-[11px] text-[#d8c36a]">
+                            No evals
                           </p>
                         ) : null}
                         <p className="mt-2 font-mono text-xs text-muted">
@@ -1237,12 +1465,14 @@ function BranchSwitcher({
   branches,
   currentBranch,
   onSelectBranch,
-  onCreateBranch
+  onCreateBranch,
+  onMergeIntoMain
 }: {
   branches: BranchOption[];
   currentBranch: BranchOption | null;
   onSelectBranch: (branch: BranchOption) => void;
   onCreateBranch: (name: string) => Promise<void>;
+  onMergeIntoMain: () => void | Promise<void>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -1378,13 +1608,27 @@ function BranchSwitcher({
                 </div>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsCreateFormOpen(true)}
-                className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
-              >
-                + New branch
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateFormOpen(true)}
+                  className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+                >
+                  + New branch
+                </button>
+                {!currentBranch.is_main ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMenu();
+                      onMergeIntoMain();
+                    }}
+                    className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+                  >
+                    Merge into main
+                  </button>
+                ) : null}
+              </div>
             )}
           </div>
         </div>
@@ -1417,6 +1661,131 @@ function UserAvatar() {
     <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-sm font-medium text-ink">
       S
     </div>
+  );
+}
+
+function MergeGatePanel({
+  flow,
+  onConfirm,
+  onCancel
+}: {
+  flow: MergeFlowState;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const summary = flow.summary;
+  const failedCases = (flow.results ?? []).filter((result) => !result.passed);
+
+  return (
+    <section className="flex flex-col gap-4 rounded-md border border-line bg-panel p-5">
+      {flow.status === "running" ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium text-ink">Running evals before merge...</p>
+          <div className="flex items-center gap-1.5" aria-hidden="true">
+            <span className="h-2 w-2 animate-bounce rounded-full bg-muted [animation-delay:-0.2s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-muted [animation-delay:-0.1s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-muted" />
+          </div>
+        </div>
+      ) : null}
+
+      {flow.status === "no-evals" ? (
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-sm font-medium text-amber-200">No eval cases found - merge without testing?</p>
+            <p className="mt-2 text-sm text-muted">
+              This branch has no eval cases, so the merge can proceed with a warning.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="rounded-sm border border-amber-900 bg-[#241f10] px-4 py-2 text-sm font-medium text-[#e6d48a] transition-colors hover:border-[#8d7d31] hover:text-[#f1de95] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Merge anyway
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {flow.status === "ready" ? (
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-sm font-medium text-green-200">
+              Evals passed - {summary ? `${summary.score}/${summary.total} passed` : "ready to merge"}
+            </p>
+            <p className="mt-2 text-sm text-muted">This branch cleared the 80% merge gate.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="rounded-sm border border-green-900 bg-[#0f2a10] px-4 py-2 text-sm font-medium text-green-200 transition-colors hover:border-green-700 hover:text-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Confirm merge
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {flow.status === "blocked" ? (
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-sm font-medium text-red-200">
+              Merge blocked - {summary ? `${summary.score}/${summary.total} passed (need 80%)` : "evals failed"}
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Fix the failing cases on this branch then try again.
+            </p>
+          </div>
+
+          {flow.error ? <p className="text-sm leading-6 text-accent">{flow.error}</p> : null}
+
+          {summary ? (
+            <p className="font-mono text-xs text-muted">
+              {summary.score} / {summary.total} passed - {getMergeThresholdMessage(summary.score, summary.total)}
+            </p>
+          ) : null}
+
+          {failedCases.length > 0 ? (
+            <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4">
+              {failedCases.map((result) => (
+                <div key={result.eval_case_id} className="rounded-sm border border-line bg-panel p-3">
+                  <p className="text-sm text-ink">{result.input}</p>
+                  <p className="mt-2 text-sm text-muted">Expected: {result.expected_outcome}</p>
+                  <p className="mt-2 font-mono text-xs text-muted">{result.response || "No response"}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
