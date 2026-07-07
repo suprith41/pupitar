@@ -976,12 +976,12 @@ export default function RepoEditorShell({
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-6">
           <div className="flex min-w-0 items-center gap-2 text-sm font-medium tracking-wide text-ink">
             <Link href="/dashboard" className="shrink-0">
-              Pupitar
+              PUPITAR
             </Link>
             <span className="text-muted">/</span>
             <span className="shrink-0 text-muted">suprith</span>
             <span className="text-muted">/</span>
-            <span className="truncate">{repo.name}</span>
+            <span className="truncate text-ink">{repo.name}</span>
             <BranchSwitcher
               branches={branches}
               currentBranch={currentBranch}
@@ -995,7 +995,7 @@ export default function RepoEditorShell({
             {deployedVersionLabel == null ? null : (
               <span
                 className={`rounded-sm border px-2.5 py-1 font-mono text-xs ${
-                  deployFeedback ? "border-accent text-accent" : "border-accent text-accent"
+                  deployFeedback ? "border-[#4F46E5] text-[#4F46E5]" : "border-[#4F46E5] text-[#4F46E5]"
                 }`}
               >
                 {deployedVersionLabel}
@@ -1009,10 +1009,10 @@ export default function RepoEditorShell({
           <button
             type="button"
             onClick={() => setActiveTab("editor")}
-            className={`rounded-sm px-3 py-1.5 text-sm transition-colors ${
+            className={`border-b-2 px-0 py-2 text-sm transition-colors ${
               activeTab === "editor"
-                ? "bg-panel text-ink"
-                : "text-muted hover:text-ink"
+                ? "border-[#4F46E5] text-ink"
+                : "border-transparent text-muted hover:text-ink"
             }`}
           >
             Editor
@@ -1020,10 +1020,10 @@ export default function RepoEditorShell({
           <button
             type="button"
             onClick={() => setActiveTab("evals")}
-            className={`rounded-sm px-3 py-1.5 text-sm transition-colors ${
+            className={`border-b-2 px-0 py-2 text-sm transition-colors ${
               activeTab === "evals"
-                ? "bg-panel text-ink"
-                : "text-muted hover:text-ink"
+                ? "border-[#4F46E5] text-ink"
+                : "border-transparent text-muted hover:text-ink"
             }`}
           >
             Evals
@@ -1056,7 +1056,7 @@ export default function RepoEditorShell({
             ) : (
               <>
                 {isPreviewing ? (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-panel p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-3">
                     <p className="text-sm text-muted">
                       Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
                       - this is read only
@@ -1065,7 +1065,7 @@ export default function RepoEditorShell({
                       <button
                         type="button"
                         onClick={exitPreview}
-                        className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                        className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5]"
                       >
                         Cancel
                       </button>
@@ -1073,7 +1073,7 @@ export default function RepoEditorShell({
                         type="button"
                         onClick={onRestore}
                         disabled={isCommitting}
-                        className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-sm border border-line bg-white px-3 py-2 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isCommitting ? "Restoring..." : "Restore this version"}
                       </button>
@@ -1086,54 +1086,54 @@ export default function RepoEditorShell({
                   onChange={(event) => setContent(event.target.value)}
                   readOnly={isPreviewing}
                   spellCheck={false}
-                  className={`min-h-[520px] w-full resize-none rounded-md border bg-[#0d0d10] p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-accent read-only:text-muted ${
-                    isPreviewing ? "border-accent/70" : "border-line"
+                  className={`min-h-[520px] w-full resize-none border bg-white p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5] read-only:text-muted ${
+                    isPreviewing ? "border-[#4F46E5]/70" : "border-line"
                   }`}
                   placeholder="Write the system prompt..."
                 />
 
-                <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onCommit}>
+                <form className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center" onSubmit={onCommit}>
                   <input
                     value={commitMessage}
                     onChange={(event) => setCommitMessage(event.target.value)}
                     disabled={isPreviewing}
-                    className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-0 flex-1 border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="Commit message"
                   />
                   <button
                     type="submit"
                     disabled={isCommitting || isPreviewing}
-                    className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit"}
+                    {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit →"}
                   </button>
                 </form>
 
-                <section className="border-t border-line pt-6">
-                  <h2 className="text-sm font-medium text-ink">Playground</h2>
-                  <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onRun}>
+                <section className="border-t border-line pt-8">
+                  <h2 className="text-[11px] uppercase tracking-[0.15em] text-muted">Playground</h2>
+                  <form className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center" onSubmit={onRun}>
                     <input
                       value={testMessage}
                       onChange={(event) => setTestMessage(event.target.value)}
-                      className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                      className="min-w-0 flex-1 border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                       placeholder="Type a test message..."
                     />
                     <button
                       type="submit"
                       disabled={isRunning || !testMessage.trim()}
-                      className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isRunning ? "Running..." : "Run"}
+                      {isRunning ? "Running..." : "Run →"}
                     </button>
                   </form>
-                  <div className="mt-4 min-h-32 rounded-md border border-line bg-panel p-4">
-                    <p className={`whitespace-pre-wrap text-sm leading-6 ${playgroundError ? "text-accent" : "text-ink"}`}>
+                  <div className="mt-4 min-h-32 border-t border-line pt-4">
+                    <p className={`whitespace-pre-wrap text-sm leading-7 ${playgroundError ? "text-[#DC2626]" : "text-muted"}`}>
                       {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
                     </p>
                   </div>
                 </section>
 
-                {error ? <p className="text-sm leading-6 text-accent">{error}</p> : null}
+                {error ? <p className="text-sm leading-7 text-[#DC2626]">{error}</p> : null}
                 {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
               </>
             )}
@@ -1142,14 +1142,16 @@ export default function RepoEditorShell({
           <section className="flex flex-col gap-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-2xl font-semibold text-ink">Evals</p>
-                <p className="mt-1 text-sm text-muted">Run repo-specific cases against the current branch.</p>
+                <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Evals</p>
+                <p className="mt-2 text-lg font-medium tracking-[-0.03em] text-ink">
+                  Run repo-specific cases against the current branch.
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsGenerateModalOpen(true)}
-                  className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                  className="border border-line bg-white px-3 py-2 text-sm text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5]"
                 >
                   AI generate
                 </button>
@@ -1157,7 +1159,7 @@ export default function RepoEditorShell({
                   type="button"
                   onClick={runEvals}
                   disabled={isRunningEvals || evalCases.length === 0 || !currentBranchLatestVersion}
-                  className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  className="border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isRunningEvals
                     ? `Running ${evalCases.length} evals...`
@@ -1167,14 +1169,14 @@ export default function RepoEditorShell({
             </div>
 
             {evalRunSummary ? (
-              <div className="rounded-md border border-line bg-panel p-4">
+              <div className="border-t border-line py-4">
                 <p className="font-mono text-sm text-ink">
                   {evalRunSummary.score} / {evalRunSummary.total} passed
                 </p>
               </div>
             ) : null}
 
-            <div className="rounded-md border border-line bg-panel p-4">
+            <div className="border-t border-line pt-4">
               <div className="flex flex-col gap-3">
                 {evalCases.length === 0 ? (
                   <p className="text-sm text-muted">No eval cases yet.</p>
@@ -1182,7 +1184,7 @@ export default function RepoEditorShell({
                   evalCases.map((evalCase) => {
                     const result = evalRunResults?.find((item) => item.eval_case_id === evalCase.id);
                     return (
-                      <div key={evalCase.id} className="rounded-md border border-line bg-surface p-4">
+                      <div key={evalCase.id} className="border border-line bg-panel p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <p className="text-sm text-ink">{evalCase.input}</p>
@@ -1196,8 +1198,8 @@ export default function RepoEditorShell({
                               <span
                                 className={`rounded-sm border px-2 py-1 font-mono text-[11px] ${
                                   result.passed
-                                    ? "border-green-900 bg-[#0f2a10] text-green-200"
-                                    : "border-red-900 bg-[#2a1010] text-red-200"
+                                    ? "border-[#1a3a1a] text-[#4caf50]"
+                                    : "border-[#3a1a1a] text-[#f44336]"
                                 }`}
                               >
                                 {result.verdict}
@@ -1206,7 +1208,7 @@ export default function RepoEditorShell({
                             <button
                               type="button"
                               onClick={() => deleteEvalCase(evalCase.id)}
-                              className="rounded-sm border border-line px-2 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+                              className="text-xs text-muted transition-colors hover:text-ink"
                             >
                               X
                             </button>
@@ -1224,25 +1226,25 @@ export default function RepoEditorShell({
               </div>
             </div>
 
-            <div className="rounded-md border border-line bg-panel p-4">
-              <p className="mb-4 text-sm font-medium text-ink">Add eval case</p>
+            <div className="border-t border-line pt-8">
+              <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Add eval case</p>
               <div className="grid gap-3">
                 <input
                   value={newEvalInput}
                   onChange={(event) => setNewEvalInput(event.target.value)}
-                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  className="border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                   placeholder="Test input"
                 />
                 <input
                   value={newEvalExpectedOutcome}
                   onChange={(event) => setNewEvalExpectedOutcome(event.target.value)}
-                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  className="border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                   placeholder="Expected outcome"
                 />
                 <input
                   value={newEvalDescription}
                   onChange={(event) => setNewEvalDescription(event.target.value)}
-                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  className="border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                   placeholder="Description"
                 />
                 <div className="flex items-center gap-2">
@@ -1250,49 +1252,49 @@ export default function RepoEditorShell({
                     type="button"
                     onClick={addEvalCase}
                     disabled={isAddingEvalCase}
-                    className="rounded-sm border border-accent bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
                   >
-                    {isAddingEvalCase ? "Adding..." : "Add"}
+                    {isAddingEvalCase ? "Adding..." : "Add →"}
                   </button>
-                  {evalError ? <p className="text-sm text-accent">{evalError}</p> : null}
+                  {evalError ? <p className="text-sm text-[#DC2626]">{evalError}</p> : null}
                 </div>
               </div>
             </div>
 
             {isGenerateModalOpen ? (
-              <div className="fixed inset-0 z-40 flex items-center justify-center bg-surface/80 px-6 py-8">
-                <div className="w-full max-w-md rounded-md border border-line bg-panel p-5">
+              <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/90 px-6 py-8">
+                <div className="w-full max-w-md border border-line bg-white p-5">
                   <div className="flex items-center justify-between gap-4">
-                    <h3 className="text-lg font-medium text-ink">AI generate</h3>
+                    <h3 className="text-[11px] uppercase tracking-[0.15em] text-muted">AI generate</h3>
                     <button
                       type="button"
                       onClick={() => {
                         setIsGenerateModalOpen(false);
                         setGenerateError("");
                       }}
-                      className="rounded-sm border border-line px-2.5 py-1 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                      className="text-sm text-muted transition-colors hover:text-ink"
                     >
                       Close
                     </button>
                   </div>
-                  <p className="mt-3 text-sm text-muted">
+                  <p className="mt-4 text-sm leading-7 text-muted">
                     Describe your prompt&apos;s purpose in one sentence
                   </p>
                   <textarea
                     value={generatePurpose}
                     onChange={(event) => setGeneratePurpose(event.target.value)}
-                    className="mt-4 min-h-28 w-full resize-none rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    className="mt-4 min-h-28 w-full resize-none border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                     placeholder="e.g. help support agents decide whether to approve a refund"
                   />
-                  {generateError ? <p className="mt-3 text-sm text-accent">{generateError}</p> : null}
+                  {generateError ? <p className="mt-3 text-sm text-[#DC2626]">{generateError}</p> : null}
                   <div className="mt-4 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={generateEvalCases}
                       disabled={isGeneratingEvals}
-                      className="rounded-sm border border-accent bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      className="text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
                     >
-                      {isGeneratingEvals ? "Generating..." : "Generate"}
+                      {isGeneratingEvals ? "Generating..." : "Generate →"}
                     </button>
                     <button
                       type="button"
@@ -1300,7 +1302,7 @@ export default function RepoEditorShell({
                         setIsGenerateModalOpen(false);
                         setGenerateError("");
                       }}
-                      className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                      className="text-sm text-muted transition-colors hover:text-ink"
                     >
                       Cancel
                     </button>
@@ -1314,13 +1316,13 @@ export default function RepoEditorShell({
       </section>
 
       <aside className="flex min-w-0 flex-col gap-6 border-line lg:border-l lg:pl-6">
-        <section className="flex flex-col gap-5 rounded-md border border-line bg-panel p-5">
+        <section className="flex flex-col gap-5 border-t border-line pt-6">
           <label className="flex flex-col gap-2 text-sm text-muted">
-            Model
+            <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Model</span>
             <select
               value={model}
               onChange={(event) => setModel(event.target.value)}
-              className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
+              className="border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-[#4F46E5]"
             >
               {models.map((modelName) => (
                 <option key={modelName} value={modelName}>
@@ -1332,7 +1334,7 @@ export default function RepoEditorShell({
 
           <label className="flex flex-col gap-2 text-sm text-muted">
             <span className="flex items-center justify-between gap-4">
-              Temperature
+              <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Temperature</span>
               <span className="font-mono text-xs text-ink">{temperature.toFixed(1)}</span>
             </span>
             <input
@@ -1347,13 +1349,13 @@ export default function RepoEditorShell({
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-muted">
-            Max tokens
+            <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Max tokens</span>
             <input
               type="number"
               min="1"
               value={maxTokens}
               onChange={(event) => setMaxTokens(Number(event.target.value))}
-              className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
+              className="border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-[#4F46E5]"
             />
           </label>
 
@@ -1361,25 +1363,25 @@ export default function RepoEditorShell({
             type="button"
             onClick={onDeploy}
             disabled={isDeploying || !canDeploy}
-            className="rounded-sm border border-accent bg-accent px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-fit border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDeploying ? "Deploying..." : "Deploy"}
           </button>
 
           {deploymentDetails ? (
-            <div className="border-t border-line pt-5">
-              <p className="text-sm font-medium text-ink">Live endpoint</p>
-              <code className="mt-3 block break-all rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs text-muted">
+            <div className="border border-line bg-panel p-4">
+              <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Live endpoint</p>
+              <code className="mt-3 block break-all border border-line bg-white px-3 py-2 font-mono text-xs text-[#4F46E5]">
                 POST {deploymentDetails.endpoint_url}
               </code>
               <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <code className="block break-all rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs text-muted">
+                <code className="block break-all border border-line bg-white px-3 py-2 font-mono text-xs text-muted">
                   {deploymentDetails.api_key}
                 </code>
                 <button
                   type="button"
                   onClick={() => copyApiKey(deploymentDetails.api_key)}
-                  className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                  className="text-sm text-muted transition-colors hover:text-ink"
                 >
                   {didCopyApiKey ? "Copied" : "Copy"}
                 </button>
@@ -1392,11 +1394,11 @@ export default function RepoEditorShell({
         </section>
 
         <section className="flex flex-col gap-3 border-t border-line pt-6">
-          <h2 className="text-lg font-medium text-ink">History</h2>
+          <h2 className="text-[11px] uppercase tracking-[0.15em] text-muted">History</h2>
           {currentBranchVersions.length === 0 ? (
             <p className="text-sm leading-6 text-muted">No commits yet.</p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-0">
               {currentBranchVersions.map((version) => {
                 const isCurrent = previewVersion?.id === version.id || (!isPreviewing && activeVersionId === version.id);
                 const isMainVersion = isLegacyMainVersion(version, currentBranch?.is_main ? currentBranch.id : null);
@@ -1409,8 +1411,8 @@ export default function RepoEditorShell({
                 return (
                   <div
                     key={version.id}
-                    className={`flex items-stretch gap-2 rounded-md border p-3 transition-colors ${
-                      isCurrent ? "border-accent bg-panel" : "border-line bg-transparent hover:border-accent"
+                    className={`flex items-stretch gap-2 border-b border-line py-3 transition-colors ${
+                      isCurrent ? "border-l-2 border-[#4F46E5] bg-panel pl-3" : "pl-0"
                     }`}
                   >
                     <button
@@ -1420,7 +1422,7 @@ export default function RepoEditorShell({
                     >
                       <span
                         className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
-                          isMainVersion ? "bg-[#73737d]" : "bg-violet-500"
+                          isMainVersion ? "bg-[#9CA3AF]" : "bg-[#4F46E5]"
                         }`}
                         aria-hidden="true"
                       />
@@ -1429,11 +1431,11 @@ export default function RepoEditorShell({
                           {version.commit_message || "Untitled commit"}
                         </p>
                         {version.eval_score != null && version.eval_total != null ? (
-                          <p className="mt-1 font-mono text-xs text-muted">
+                          <p className="mt-1 inline-flex border border-line bg-panel px-2 py-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
                             {version.eval_score}/{version.eval_total}
                           </p>
                         ) : isMergeWithoutEvals ? (
-                          <p className="mt-1 inline-flex rounded-sm border border-amber-900 bg-[#241f10] px-1.5 py-0.5 font-mono text-[11px] text-[#d8c36a]">
+                          <p className="mt-1 inline-flex border border-line bg-panel px-2 py-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
                             No evals
                           </p>
                         ) : null}
@@ -1446,7 +1448,7 @@ export default function RepoEditorShell({
                     <button
                       type="button"
                       onClick={() => openDiff(version)}
-                      className="shrink-0 self-start rounded-sm border border-line px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted transition-colors hover:border-accent hover:text-accent"
+                      className="shrink-0 self-start font-mono text-[11px] uppercase tracking-[0.16em] text-[#4F46E5] transition-colors hover:text-[#111111]"
                     >
                       Diff
                     </button>
@@ -1543,14 +1545,14 @@ function BranchSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="ml-3 inline-flex items-center gap-1 rounded-sm border border-line bg-panel px-3 py-1.5 text-xs font-medium tracking-normal text-ink transition-colors hover:border-accent hover:text-accent"
+        className="ml-3 inline-flex items-center gap-1 text-sm text-[#4F46E5] transition-colors hover:text-[#3730A3]"
       >
         <span className="max-w-28 truncate">{currentBranch.name}</span>
         <ChevronDownIcon />
       </button>
 
       {isOpen ? (
-        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-20 w-64 rounded-md border border-line bg-panel p-2 shadow-2xl shadow-black/30">
+        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-20 w-64 border border-line bg-white p-2 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
           <div className="flex flex-col gap-1">
             {branches.map((branch) => {
               const isSelected = branch.id === currentBranch.id;
@@ -1563,8 +1565,8 @@ function BranchSwitcher({
                     onSelectBranch(branch);
                     closeMenu();
                   }}
-                  className={`flex items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors ${
-                    isSelected ? "bg-surface text-ink" : "text-muted hover:bg-surface hover:text-ink"
+                  className={`flex items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                    isSelected ? "text-ink" : "text-muted hover:text-ink"
                   }`}
                 >
                   <span className="truncate">{branch.name}</span>
@@ -1586,22 +1588,22 @@ function BranchSwitcher({
                   value={branchName}
                   onChange={(event) => setBranchName(event.target.value)}
                   placeholder="new-branch-name"
-                  className="rounded-sm border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  className="border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-[#4F46E5]"
                 />
-                {error ? <p className="px-1 text-xs leading-5 text-accent">{error}</p> : null}
+                {error ? <p className="px-1 text-xs leading-5 text-[#DC2626]">{error}</p> : null}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleCreateBranch}
                     disabled={isCreating}
-                    className="rounded-sm border border-accent bg-accent px-3 py-1.5 text-xs font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="text-xs text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
                   >
                     {isCreating ? "Creating..." : "Create"}
                   </button>
                   <button
                     type="button"
                     onClick={closeMenu}
-                    className="rounded-sm border border-line px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+                    className="text-xs text-muted transition-colors hover:text-ink"
                   >
                     Cancel
                   </button>
@@ -1612,7 +1614,7 @@ function BranchSwitcher({
                 <button
                   type="button"
                   onClick={() => setIsCreateFormOpen(true)}
-                  className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+                  className="w-full px-3 py-2 text-left text-sm text-muted transition-colors hover:text-ink"
                 >
                   + New branch
                 </button>
@@ -1623,7 +1625,7 @@ function BranchSwitcher({
                       closeMenu();
                       onMergeIntoMain();
                     }}
-                    className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+                    className="w-full border-t border-line px-3 py-2 text-left text-sm text-[#f44336] transition-colors hover:text-ink"
                   >
                     Merge into main
                   </button>
@@ -1658,7 +1660,7 @@ function ChevronDownIcon() {
 
 function UserAvatar() {
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-sm font-medium text-ink">
+    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-white text-sm font-medium text-ink">
       S
     </div>
   );
@@ -1677,7 +1679,7 @@ function MergeGatePanel({
   const failedCases = (flow.results ?? []).filter((result) => !result.passed);
 
   return (
-    <section className="flex flex-col gap-4 rounded-md border border-line bg-panel p-5">
+    <section className="flex flex-col gap-4 border border-line bg-panel p-5">
       {flow.status === "running" ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm font-medium text-ink">Running evals before merge...</p>
@@ -1692,7 +1694,7 @@ function MergeGatePanel({
       {flow.status === "no-evals" ? (
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm font-medium text-amber-200">No eval cases found - merge without testing?</p>
+            <p className="text-sm font-medium text-ink">No eval cases found - merge without testing?</p>
             <p className="mt-2 text-sm text-muted">
               This branch has no eval cases, so the merge can proceed with a warning.
             </p>
@@ -1701,14 +1703,14 @@ function MergeGatePanel({
             <button
               type="button"
               onClick={onConfirm}
-              className="rounded-sm border border-amber-900 bg-[#241f10] px-4 py-2 text-sm font-medium text-[#e6d48a] transition-colors hover:border-[#8d7d31] hover:text-[#f1de95] disabled:cursor-not-allowed disabled:opacity-60"
+              className="text-sm text-[#DC2626] transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
             >
               Merge anyway
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+              className="text-sm text-muted transition-colors hover:text-ink"
             >
               Cancel
             </button>
@@ -1719,7 +1721,7 @@ function MergeGatePanel({
       {flow.status === "ready" ? (
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm font-medium text-green-200">
+            <p className="text-sm font-medium text-[#16A34A]">
               Evals passed - {summary ? `${summary.score}/${summary.total} passed` : "ready to merge"}
             </p>
             <p className="mt-2 text-sm text-muted">This branch cleared the 80% merge gate.</p>
@@ -1728,14 +1730,14 @@ function MergeGatePanel({
             <button
               type="button"
               onClick={onConfirm}
-              className="rounded-sm border border-green-900 bg-[#0f2a10] px-4 py-2 text-sm font-medium text-green-200 transition-colors hover:border-green-700 hover:text-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Confirm merge
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+              className="border border-line bg-white px-4 py-2.5 text-sm text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5]"
             >
               Cancel
             </button>
@@ -1746,7 +1748,7 @@ function MergeGatePanel({
       {flow.status === "blocked" ? (
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm font-medium text-red-200">
+            <p className="text-sm font-medium text-[#DC2626]">
               Merge blocked - {summary ? `${summary.score}/${summary.total} passed (need 80%)` : "evals failed"}
             </p>
             <p className="mt-2 text-sm text-muted">
@@ -1754,7 +1756,7 @@ function MergeGatePanel({
             </p>
           </div>
 
-          {flow.error ? <p className="text-sm leading-6 text-accent">{flow.error}</p> : null}
+          {flow.error ? <p className="text-sm leading-6 text-[#DC2626]">{flow.error}</p> : null}
 
           {summary ? (
             <p className="font-mono text-xs text-muted">
@@ -1763,9 +1765,9 @@ function MergeGatePanel({
           ) : null}
 
           {failedCases.length > 0 ? (
-            <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4">
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
               {failedCases.map((result) => (
-                <div key={result.eval_case_id} className="rounded-sm border border-line bg-panel p-3">
+                <div key={result.eval_case_id} className="border-b border-line pb-3 last:border-b-0 last:pb-0">
                   <p className="text-sm text-ink">{result.input}</p>
                   <p className="mt-2 text-sm text-muted">Expected: {result.expected_outcome}</p>
                   <p className="mt-2 font-mono text-xs text-muted">{result.response || "No response"}</p>
@@ -1778,7 +1780,7 @@ function MergeGatePanel({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+              className="text-sm text-muted transition-colors hover:text-ink"
             >
               Cancel
             </button>
@@ -1805,19 +1807,15 @@ function DiffViewPanel({
   const hasChanges = diffRows.some((row) => row.kind !== "equal");
 
   return (
-    <section className="flex flex-col gap-4 rounded-md border border-line bg-panel p-5">
+    <section className="flex flex-col gap-4 border-t border-line pt-5">
       <div className="flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-sm border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
-        >
+        <button type="button" onClick={onBack} className="text-sm text-[#4F46E5] transition-colors hover:text-[#3730A3]">
           ← Back to editor
         </button>
-        <p className="font-mono text-xs text-muted">Comparing v{sourceVersionNumber} → current</p>
+        <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Comparing v{sourceVersionNumber} → current</p>
       </div>
 
-      <div className="grid gap-3 rounded-md border border-line bg-surface p-3 text-xs text-muted sm:grid-cols-2">
+      <div className="grid gap-3 border-t border-line pt-3 text-xs text-muted sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <p className="text-ink">{sourceVersion.commit_message || "Untitled commit"}</p>
           <p className="font-mono">{formatRelativeTime(sourceVersion.created_at)}</p>
@@ -1829,7 +1827,7 @@ function DiffViewPanel({
       </div>
 
       {hasChanges ? (
-        <div className="max-h-[70vh] overflow-auto rounded-md border border-line bg-[#0d0d10]">
+        <div className="max-h-[70vh] overflow-auto border border-line bg-white">
           <div className="grid grid-cols-2 gap-px">
             <div className="border-b border-line/80 px-3 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted">
               Older version
@@ -1846,7 +1844,7 @@ function DiffViewPanel({
           </div>
         </div>
       ) : (
-        <div className="rounded-md border border-line bg-surface px-4 py-8 text-center text-sm text-muted">
+        <div className="border border-line px-4 py-8 text-center text-sm text-muted">
           No changes between these versions
         </div>
       )}
@@ -1870,8 +1868,8 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
   if (row.kind === "delete") {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-        <div className={`${rowClasses} bg-[#2a1010] text-red-100`}>
-          <span className="mr-2 text-red-300">-</span>
+        <div className={`${rowClasses} bg-[#FEF2F2] text-[#DC2626]`}>
+          <span className="mr-2 text-[#DC2626]">-</span>
           <span>{row.oldLine || " "}</span>
         </div>
         <div className={rowClasses} />
@@ -1883,8 +1881,8 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
         <div className={rowClasses} />
-        <div className={`${rowClasses} bg-[#0f2a10] text-green-100`}>
-          <span className="mr-2 text-green-300">+</span>
+        <div className={`${rowClasses} bg-[#F0FDF4] text-[#16A34A]`}>
+          <span className="mr-2 text-[#16A34A]">+</span>
           <span>{row.newLine || " "}</span>
         </div>
       </div>
@@ -1893,12 +1891,12 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
 
   return (
     <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-      <div className={`${rowClasses} bg-[#2a1010] text-red-100`}>
-        <span className="mr-2 text-red-300">-</span>
+      <div className={`${rowClasses} bg-[#FEF2F2] text-[#DC2626]`}>
+        <span className="mr-2 text-[#DC2626]">-</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="old" />
       </div>
-      <div className={`${rowClasses} bg-[#0f2a10] text-green-100`}>
-        <span className="mr-2 text-green-300">+</span>
+      <div className={`${rowClasses} bg-[#F0FDF4] text-[#16A34A]`}>
+        <span className="mr-2 text-[#16A34A]">+</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="new" />
       </div>
     </div>
@@ -1932,7 +1930,7 @@ function InlineDiffText({
             return (
               <span
                 key={index}
-                className="rounded-sm bg-[#4a1515] px-0.5 text-red-50"
+                className="rounded-sm bg-[#FEF2F2] px-0.5 text-red-50"
               >
                 {text}
               </span>
@@ -1950,7 +1948,7 @@ function InlineDiffText({
           return (
             <span
               key={index}
-              className="rounded-sm bg-[#144a15] px-0.5 text-green-50"
+              className="rounded-sm bg-[#F0FDF4] px-0.5 text-green-50"
             >
               {text}
             </span>

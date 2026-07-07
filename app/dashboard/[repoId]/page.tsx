@@ -7,12 +7,12 @@ import RepoEditorShell from "./repo-editor-shell";
 export default async function RepoPage({ params }: { params: { repoId: string } }) {
   if (!hasSupabaseConfig()) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-8 text-ink md:px-10 md:py-12">
-        <section className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-          <RepoPageHeader />
-          <div className="rounded-md border border-line bg-panel p-6">
-            <p className="text-lg font-medium text-ink">Connect Supabase</p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+        <section className="mx-auto flex w-full max-w-[960px] flex-col">
+          <RepoPageHeader repoName="PUPITAR" />
+          <div className="border-t border-line py-10">
+            <p className="text-lg font-medium tracking-[-0.03em] text-ink">Connect Supabase</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-muted">
               Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable repo
               editing.
             </p>
@@ -62,12 +62,12 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (versionsError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-8 text-ink md:px-10 md:py-12">
-        <section className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-          <RepoPageHeader />
-          <div className="rounded-md border border-line bg-panel p-6">
-            <p className="text-lg font-medium text-ink">Could not load this repo</p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{versionsError.message}</p>
+      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+        <section className="mx-auto flex w-full max-w-[960px] flex-col">
+          <RepoPageHeader repoName="PUPITAR" />
+          <div className="border-t border-line py-10">
+            <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load this repo</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{versionsError.message}</p>
           </div>
         </section>
       </main>
@@ -76,12 +76,12 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (branchesError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-8 text-ink md:px-10 md:py-12">
-        <section className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-          <RepoPageHeader />
-          <div className="rounded-md border border-line bg-panel p-6">
-            <p className="text-lg font-medium text-ink">Could not load branches</p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{branchesError.message}</p>
+      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+        <section className="mx-auto flex w-full max-w-[960px] flex-col">
+          <RepoPageHeader repoName="Pupitar" />
+          <div className="border-t border-line py-10">
+            <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load branches</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{branchesError.message}</p>
           </div>
         </section>
       </main>
@@ -90,12 +90,12 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (evalCasesError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-8 text-ink md:px-10 md:py-12">
-        <section className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-          <RepoPageHeader />
-          <div className="rounded-md border border-line bg-panel p-6">
-            <p className="text-lg font-medium text-ink">Could not load eval cases</p>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{evalCasesError.message}</p>
+      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+        <section className="mx-auto flex w-full max-w-[900px] flex-col">
+          <RepoPageHeader repoName={repo.name} />
+          <div className="border-t border-line py-10">
+            <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load eval cases</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{evalCasesError.message}</p>
           </div>
         </section>
       </main>
@@ -103,8 +103,8 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   }
 
   return (
-    <main className="min-h-screen bg-surface px-6 py-8 text-ink md:px-10 md:py-12">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10">
+    <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+      <section className="mx-auto flex w-full max-w-[960px] flex-col">
         <RepoEditorShell
           repo={repo}
           initialVersions={versions ?? []}
@@ -117,15 +117,17 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   );
 }
 
-function RepoPageHeader() {
+function RepoPageHeader({ repoName }: { repoName: string }) {
   return (
-    <header className="flex items-center justify-between border-b border-line pb-6">
-      <div className="flex min-w-0 items-center gap-2 text-sm font-medium tracking-wide text-ink">
+    <header className="flex items-center justify-between border-b border-line pb-4 pt-1 text-[13px] uppercase tracking-[0.18em] text-muted">
+      <div className="flex min-w-0 items-center gap-2">
         <Link href="/dashboard" className="shrink-0">
-          Pupitar
+          PUPITAR
         </Link>
-        <span className="text-muted">/</span>
-        <span className="shrink-0 text-muted">suprith</span>
+        <span>/</span>
+        <span>suprith</span>
+        <span>/</span>
+        <span className="shrink-0 text-ink">{repoName}</span>
       </div>
     </header>
   );

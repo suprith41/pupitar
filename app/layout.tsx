@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter"
-});
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -14,7 +9,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Pupitar",
-  description: "Pupitar application scaffold"
+  description: "Version control for AI prompts and evals"
 };
 
 export default function RootLayout({
@@ -23,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={jetbrainsMono.variable}>
       <body>{children}</body>
     </html>
   );

@@ -5,20 +5,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: "#111114",
-        panel: "#18171d",
-        line: "#2a2832",
-        ink: "#f2f0f5",
-        muted: "#a9a4b5",
-        accent: "#9b7ed8"
+        surface: "#FFFFFF",
+        panel: "#F3F4F6",
+        line: "#E5E7EB",
+        ink: "#111111",
+        muted: "#6B7280",
+        accent: "#4F46E5"
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "sans-serif"],
+        sans: ["Source Serif 4", "Georgia", "serif"],
+        heading: ["Fredericka the Great", "Georgia", "serif"],
         mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "monospace"]
       },
       borderRadius: {
         sm: "4px",
-        md: "8px"
+        md: "4px"
       }
     }
   },
