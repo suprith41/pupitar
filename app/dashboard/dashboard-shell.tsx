@@ -18,7 +18,7 @@ type DashboardShellProps = {
   initialErrorMessage?: string;
 };
 
-export function DashboardShell({ repos, canCreateRepos, initialErrorMessage }: DashboardShellProps) {
+export default function DashboardShell({ repos, canCreateRepos, initialErrorMessage }: DashboardShellProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -196,6 +196,17 @@ function NewRepoModal({
 
     if (insertError) {
       setError(insertError.message);
+      return;
+    }
+
+    const { error: branchError } = await supabase.from("branches").insert({
+      repo_id: data.id,
+      name: "main",
+      is_main: true
+    });
+
+    if (branchError) {
+      setError(branchError.message);
       return;
     }
 

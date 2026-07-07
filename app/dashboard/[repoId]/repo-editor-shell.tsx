@@ -1,12 +1,27 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+const DiffMatchPatch = require("diff-match-patch");
+
+import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
 
 type Repo = Pick<Database["public"]["Tables"]["repos"]["Row"], "id" | "name">;
 type PromptVersion = Database["public"]["Tables"]["prompt_versions"]["Row"];
+type BranchRow = Database["public"]["Tables"]["branches"]["Row"];
+type EvalCaseRow = Database["public"]["Tables"]["eval_cases"]["Row"];
+
+type BranchOption = {
+  id: string | null;
+  repo_id: string;
+  name: string;
+  created_from_version_id: string | null;
+  is_main: boolean;
+  created_at: string;
+};
 
 const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"] as const;
 const defaultModel = models[0];
@@ -14,6 +29,9 @@ const defaultModel = models[0];
 type RepoEditorShellProps = {
   repo: Repo;
   initialVersions: PromptVersion[];
+  initialBranches: BranchRow[];
+  initialEvalCases: EvalCaseRow[];
+  deploymentVersionId?: string | null;
 };
 
 type DeploymentDetails = {
@@ -21,16 +39,244 @@ type DeploymentDetails = {
   api_key: string;
 };
 
-export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps) {
-  const latestVersion = initialVersions[0] ?? null;
+type DiffLineRow = {
+  kind: "equal" | "delete" | "insert" | "replace";
+  oldLine: string;
+  newLine: string;
+};
+
+type EvalRunCaseResult = {
+  eval_case_id: string;
+  input: string;
+  expected_outcome: string;
+  description: string | null;
+  response: string;
+  passed: boolean;
+  verdict: "PASS" | "FAIL";
+};
+
+function toBranchOption(branch: BranchRow, repoId: string): BranchOption {
+  return {
+    id: branch.id,
+    repo_id: branch.repo_id || repoId,
+    name: branch.name,
+    created_from_version_id: branch.created_from_version_id,
+    is_main: Boolean(branch.is_main),
+    created_at: branch.created_at
+  };
+}
+
+function buildInitialBranches(initialBranches: BranchRow[], repoId: string) {
+  const mapped = initialBranches.map((branch) => toBranchOption(branch, repoId));
+  const mainBranch = mapped.find((branch) => branch.is_main) ?? {
+    id: null,
+    repo_id: repoId,
+    name: "main",
+    created_from_version_id: null,
+    is_main: true,
+    created_at: ""
+  };
+  const otherBranches = mapped
+    .filter((branch) => !branch.is_main)
+    .sort((first, second) => first.name.localeCompare(second.name));
+
+  return [mainBranch, ...otherBranches];
+}
+
+function isMainBranch(branch: BranchOption) {
+  return branch.is_main;
+}
+
+function isLegacyMainVersion(version: PromptVersion, mainBranchId: string | null) {
+  return version.branch_id == null || (mainBranchId != null && version.branch_id === mainBranchId);
+}
+
+function getBranchVersions(
+  versions: PromptVersion[],
+  branch: BranchOption | null,
+  mainBranchId: string | null
+) {
+  if (!branch) {
+    return [];
+  }
+
+  return versions.filter((version) => {
+    if (isMainBranch(branch)) {
+      return isLegacyMainVersion(version, mainBranchId);
+    }
+
+    return version.branch_id === branch.id;
+  });
+}
+
+function getSeedVersion(
+  versions: PromptVersion[],
+  branch: BranchOption | null,
+  mainBranchId: string | null
+) {
+  if (!branch) {
+    return null;
+  }
+
+  const branchVersions = getBranchVersions(versions, branch, mainBranchId);
+  if (branchVersions[0]) {
+    return branchVersions[0];
+  }
+
+  if (branch.created_from_version_id) {
+    return versions.find((version) => version.id === branch.created_from_version_id) ?? null;
+  }
+
+  return null;
+}
+
+function sortVersionsNewestFirst(versions: PromptVersion[]) {
+  return [...versions].sort(
+    (first, second) => new Date(second.created_at).getTime() - new Date(first.created_at).getTime()
+  );
+}
+
+function formatDeploymentLabel(versionId: string, versions: PromptVersion[]) {
+  const versionIndex = versions.findIndex((version) => version.id === versionId);
+  return versionIndex === -1 ? null : `v${versions.length - versionIndex} deployed`;
+}
+
+function stripTrailingNewline(line: string) {
+  return line.endsWith("\n") ? line.slice(0, -1) : line;
+}
+
+function splitLinesWithTerminators(text: string) {
+  if (!text) {
+    return [];
+  }
+
+  const lines: string[] = [];
+  let start = 0;
+
+  while (start < text.length) {
+    const newlineIndex = text.indexOf("\n", start);
+    if (newlineIndex === -1) {
+      lines.push(text.slice(start));
+      break;
+    }
+
+    lines.push(text.slice(start, newlineIndex + 1));
+    start = newlineIndex + 1;
+  }
+
+  return lines;
+}
+
+function computeDiffRows(oldText: string, newText: string) {
+  const diffMatchPatch = new DiffMatchPatch();
+  const encoded = diffMatchPatch.diff_linesToChars_(oldText, newText);
+  const diffs = diffMatchPatch.diff_main(encoded.chars1, encoded.chars2, false);
+  diffMatchPatch.diff_cleanupSemantic(diffs);
+  diffMatchPatch.diff_charsToLines_(diffs, encoded.lineArray);
+
+  const rows: DiffLineRow[] = [];
+  let pendingChanges: Array<{ op: number; line: string }> = [];
+
+  function flushPendingChanges() {
+    if (pendingChanges.length === 0) {
+      return;
+    }
+
+    const deletions = pendingChanges.filter((item) => item.op === -1).map((item) => stripTrailingNewline(item.line));
+    const insertions = pendingChanges.filter((item) => item.op === 1).map((item) => stripTrailingNewline(item.line));
+    const maxLength = Math.max(deletions.length, insertions.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+      const oldLine = deletions[index] ?? "";
+      const newLine = insertions[index] ?? "";
+
+      if (oldLine && newLine) {
+        rows.push({ kind: "replace", oldLine, newLine });
+      } else if (oldLine) {
+        rows.push({ kind: "delete", oldLine, newLine: "" });
+      } else if (newLine) {
+        rows.push({ kind: "insert", oldLine: "", newLine });
+      }
+    }
+
+    pendingChanges = [];
+  }
+
+  for (const [op, text] of diffs as Array<[number, string]>) {
+    const lineChunks = splitLinesWithTerminators(text);
+
+    if (op === 0) {
+      flushPendingChanges();
+      for (const line of lineChunks) {
+        const normalized = stripTrailingNewline(line);
+        rows.push({ kind: "equal", oldLine: normalized, newLine: normalized });
+      }
+      continue;
+    }
+
+    pendingChanges.push(...lineChunks.map((line) => ({ op, line })));
+  }
+
+  flushPendingChanges();
+  return rows;
+}
+
+function getInlineDiffParts(oldLine: string, newLine: string) {
+  const diffMatchPatch = new DiffMatchPatch();
+  const diffs = diffMatchPatch.diff_main(oldLine, newLine, false);
+  diffMatchPatch.diff_cleanupSemantic(diffs);
+  return diffs as Array<[number, string]>;
+}
+
+export default function RepoEditorShell({
+  repo,
+  initialVersions,
+  initialBranches,
+  initialEvalCases,
+  deploymentVersionId = null
+}: RepoEditorShellProps) {
   const [versions, setVersions] = useState(initialVersions);
-  const [content, setContent] = useState(latestVersion?.content ?? "");
+  const [evalCases, setEvalCases] = useState(initialEvalCases);
+  const [branches, setBranches] = useState<BranchOption[]>(() =>
+    buildInitialBranches(initialBranches, repo.id)
+  );
+
+  const initialBranch = branches[0] ?? {
+    id: null,
+    repo_id: repo.id,
+    name: "main",
+    created_from_version_id: null,
+    is_main: true,
+    created_at: ""
+  };
+  const initialSeedVersion = getSeedVersion(initialVersions, initialBranch, initialBranch.id);
+
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(initialBranch.id);
+  const [content, setContent] = useState(initialSeedVersion?.content ?? "");
   const [commitMessage, setCommitMessage] = useState("");
-  const [model, setModel] = useState(latestVersion?.model ?? defaultModel);
-  const [temperature, setTemperature] = useState(latestVersion?.temperature ?? 0.7);
-  const [maxTokens, setMaxTokens] = useState(latestVersion?.max_tokens ?? 512);
-  const [activeVersionId, setActiveVersionId] = useState<string | null>(latestVersion?.id ?? null);
+  const [model, setModel] = useState(initialSeedVersion?.model ?? defaultModel);
+  const [temperature, setTemperature] = useState(initialSeedVersion?.temperature ?? 0.7);
+  const [maxTokens, setMaxTokens] = useState(initialSeedVersion?.max_tokens ?? 512);
+  const [activeVersionId, setActiveVersionId] = useState<string | null>(
+    initialSeedVersion?.id ?? null
+  );
   const [previewVersion, setPreviewVersion] = useState<PromptVersion | null>(null);
+  const [diffVersionId, setDiffVersionId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"editor" | "evals">("editor");
+  const [isGeneratingEvals, setIsGeneratingEvals] = useState(false);
+  const [isRunningEvals, setIsRunningEvals] = useState(false);
+  const [evalRunResults, setEvalRunResults] = useState<EvalRunCaseResult[] | null>(null);
+  const [evalRunSummary, setEvalRunSummary] = useState<{ score: number; total: number } | null>(
+    null
+  );
+  const [generatePurpose, setGeneratePurpose] = useState("");
+  const [generateError, setGenerateError] = useState("");
+  const [evalError, setEvalError] = useState("");
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [newEvalInput, setNewEvalInput] = useState("");
+  const [newEvalExpectedOutcome, setNewEvalExpectedOutcome] = useState("");
+  const [newEvalDescription, setNewEvalDescription] = useState("");
+  const [isAddingEvalCase, setIsAddingEvalCase] = useState(false);
   const [testMessage, setTestMessage] = useState("");
   const [playgroundResponse, setPlaygroundResponse] = useState("");
   const [playgroundError, setPlaygroundError] = useState("");
@@ -41,23 +287,75 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [commitFeedback, setCommitFeedback] = useState(false);
+  const [deployFeedback, setDeployFeedback] = useState(false);
+  const commitFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deployFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const mostRecentVersion = versions[0] ?? null;
-  const isPreviewing = Boolean(previewVersion);
-  const canDeploy = Boolean(mostRecentVersion);
+  const orderedVersions = useMemo(() => sortVersionsNewestFirst(versions), [versions]);
+  const currentBranch = useMemo(() => {
+    if (selectedBranchId == null) {
+      return branches.find((branch) => branch.is_main) ?? branches[0] ?? null;
+    }
 
-  const orderedVersions = useMemo(
+    return branches.find((branch) => branch.id === selectedBranchId) ?? branches[0] ?? null;
+  }, [branches, selectedBranchId]);
+
+  const currentBranchVersions = useMemo(
+    () => getBranchVersions(orderedVersions, currentBranch, currentBranch?.id ?? null),
+    [currentBranch, orderedVersions]
+  );
+  const currentBranchLatestVersion = currentBranchVersions[0] ?? null;
+  const diffSourceVersion = useMemo(
+    () => versions.find((version) => version.id === diffVersionId) ?? null,
+    [diffVersionId, versions]
+  );
+  const diffRows = useMemo(
     () =>
-      [...versions].sort(
-        (first, second) =>
-          new Date(second.created_at).getTime() - new Date(first.created_at).getTime()
-      ),
-    [versions]
+      diffSourceVersion && currentBranchLatestVersion
+        ? computeDiffRows(diffSourceVersion.content, currentBranchLatestVersion.content)
+        : [],
+    [currentBranchLatestVersion, diffSourceVersion]
+  );
+  const mostRecentVersion = orderedVersions[0] ?? null;
+  const deployedVersionLabel =
+    deploymentVersionId == null ? null : formatDeploymentLabel(deploymentVersionId, orderedVersions);
+  const isPreviewing = Boolean(previewVersion);
+  const isDiffView = Boolean(diffSourceVersion && currentBranchLatestVersion);
+  const canDeploy = Boolean(mostRecentVersion);
+  const diffSourceVersionNumber = diffSourceVersion ? getVersionNumber(diffSourceVersion) : null;
+
+  useEffect(
+    () => () => {
+      if (commitFeedbackTimer.current) {
+        clearTimeout(commitFeedbackTimer.current);
+      }
+
+      if (deployFeedbackTimer.current) {
+        clearTimeout(deployFeedbackTimer.current);
+      }
+    },
+    []
   );
 
   function getVersionNumber(version: PromptVersion) {
     const newestFirstIndex = orderedVersions.findIndex((item) => item.id === version.id);
     return newestFirstIndex === -1 ? orderedVersions.length : orderedVersions.length - newestFirstIndex;
+  }
+
+  function syncEditorToBranch(branch: BranchOption | null) {
+    const seedVersion = getSeedVersion(versions, branch, branch?.id ?? null);
+
+    setSelectedBranchId(branch?.id ?? null);
+    setPreviewVersion(null);
+    setCommitMessage("");
+    setStatus("");
+    setError("");
+    setContent(seedVersion?.content ?? "");
+    setModel(seedVersion?.model ?? defaultModel);
+    setTemperature(seedVersion?.temperature ?? 0.7);
+    setMaxTokens(seedVersion?.max_tokens ?? 512);
+    setActiveVersionId(seedVersion?.id ?? null);
   }
 
   async function createCommit(message: string, nextContent = content) {
@@ -70,6 +368,7 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
       .from("prompt_versions")
       .insert({
         repo_id: repo.id,
+        branch_id: currentBranch?.id ?? null,
         content: nextContent,
         commit_message: message.trim() || null,
         model,
@@ -78,7 +377,7 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
         parent_version_id: activeVersionId
       })
       .select(
-        "id, repo_id, content, model, temperature, max_tokens, commit_message, parent_version_id, created_at"
+        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, created_at"
       )
       .single();
 
@@ -95,6 +394,11 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
     setActiveVersionId(data.id);
     setPreviewVersion(null);
     setStatus("Committed.");
+    setCommitFeedback(true);
+    if (commitFeedbackTimer.current) {
+      clearTimeout(commitFeedbackTimer.current);
+    }
+    commitFeedbackTimer.current = setTimeout(() => setCommitFeedback(false), 1500);
     return data;
   }
 
@@ -145,6 +449,11 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
       setDeploymentDetails(payload);
       setDidCopyApiKey(false);
       setStatus("Deployed latest commit.");
+      setDeployFeedback(true);
+      if (deployFeedbackTimer.current) {
+        clearTimeout(deployFeedbackTimer.current);
+      }
+      deployFeedbackTimer.current = setTimeout(() => setDeployFeedback(false), 1500);
     } catch (deployError) {
       const message = deployError instanceof Error ? deployError.message : "Deploy failed.";
       setError(message);
@@ -192,7 +501,7 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
           ? "Could not reach the playground backend. Make sure FastAPI is running."
           : message
             ? message
-          : "Could not reach the playground backend. Make sure FastAPI is running."
+            : "Could not reach the playground backend. Make sure FastAPI is running."
       );
     } finally {
       setIsRunning(false);
@@ -211,107 +520,377 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
   }
 
   function exitPreview() {
-    const latest = versions[0] ?? null;
+    syncEditorToBranch(currentBranch);
+  }
 
-    setContent(latest?.content ?? "");
-    setModel(latest?.model ?? defaultModel);
-    setTemperature(latest?.temperature ?? 0.7);
-    setMaxTokens(latest?.max_tokens ?? 512);
-    setActiveVersionId(latest?.id ?? null);
-    setCommitMessage("");
+  function openDiff(version: PromptVersion) {
+    setDiffVersionId(version.id);
     setPreviewVersion(null);
     setStatus("");
     setError("");
   }
 
+  function exitDiffView() {
+    setDiffVersionId(null);
+  }
+
+  async function refreshEvalCases() {
+    const supabase = createClient();
+    const { data, error: fetchError } = await supabase
+      .from("eval_cases")
+      .select("id, repo_id, input, expected_outcome, description, created_at")
+      .eq("repo_id", repo.id)
+      .order("created_at", { ascending: true });
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    setEvalCases(data ?? []);
+  }
+
+  async function refreshVersions() {
+    const supabase = createClient();
+    const { data, error: fetchError } = await supabase
+      .from("prompt_versions")
+      .select(
+        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+      )
+      .eq("repo_id", repo.id)
+      .order("created_at", { ascending: false });
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    setVersions(data ?? []);
+  }
+
+  async function addEvalCase() {
+    const input = newEvalInput.trim();
+    const expectedOutcome = newEvalExpectedOutcome.trim();
+
+    if (!input || !expectedOutcome) {
+      setEvalError("Test input and expected outcome are required.");
+      return;
+    }
+
+    setEvalError("");
+    setIsAddingEvalCase(true);
+
+    try {
+      const supabase = createClient();
+      const { data, error: insertError } = await supabase
+        .from("eval_cases")
+        .insert({
+          repo_id: repo.id,
+          input,
+          expected_outcome: expectedOutcome,
+          description: newEvalDescription.trim() || null
+        })
+        .select("id, repo_id, input, expected_outcome, description, created_at")
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (!data) {
+        throw new Error("Eval case insert did not return a row.");
+      }
+
+      setEvalCases((current) => [...current, data]);
+      setNewEvalInput("");
+      setNewEvalExpectedOutcome("");
+      setNewEvalDescription("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not add eval case.";
+      setEvalError(message);
+    } finally {
+      setIsAddingEvalCase(false);
+    }
+  }
+
+  async function deleteEvalCase(evalCaseId: string) {
+    setEvalError("");
+    const supabase = createClient();
+    const { error: deleteError } = await supabase.from("eval_cases").delete().eq("id", evalCaseId);
+
+    if (deleteError) {
+      setEvalError(deleteError.message);
+      return;
+    }
+
+    setEvalCases((current) => current.filter((item) => item.id !== evalCaseId));
+  }
+
+  async function generateEvalCases() {
+    const purpose = generatePurpose.trim();
+    if (!purpose) {
+      setGenerateError("Purpose is required.");
+      return;
+    }
+
+    setGenerateError("");
+    setIsGeneratingEvals(true);
+
+    try {
+      const response = await fetch("/api/generate-evals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose, repo_id: repo.id })
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.detail || "Generate evals failed.");
+      }
+
+      if (Array.isArray(payload?.cases)) {
+        setEvalCases((current) => [...current, ...payload.cases]);
+      } else {
+        await refreshEvalCases();
+      }
+
+      setGeneratePurpose("");
+      setIsGenerateModalOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not generate evals.";
+      setGenerateError(message);
+    } finally {
+      setIsGeneratingEvals(false);
+    }
+  }
+
+  async function runEvals() {
+    if (!currentBranchLatestVersion) {
+      setEvalError("Commit a version before running evals.");
+      return;
+    }
+
+    if (evalCases.length === 0) {
+      setEvalError("Add eval cases before running evals.");
+      return;
+    }
+
+    setEvalError("");
+    setIsRunningEvals(true);
+    setEvalRunResults(null);
+    setEvalRunSummary(null);
+
+    try {
+      const response = await fetch("/api/run-evals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_id: repo.id, version_id: currentBranchLatestVersion.id })
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.detail || "Run evals failed.");
+      }
+
+      setEvalRunResults(payload.results ?? []);
+      setEvalRunSummary({
+        score: payload.score ?? 0,
+        total: payload.total ?? evalCases.length
+      });
+
+      await refreshVersions();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not run evals.";
+      setEvalError(message);
+    } finally {
+      setIsRunningEvals(false);
+    }
+  }
+
+  async function createBranch(branchName: string) {
+    const trimmedName = branchName.trim();
+
+    if (!trimmedName) {
+      throw new Error("Branch name is required.");
+    }
+
+    const branchInsert = {
+      repo_id: repo.id,
+      name: trimmedName,
+      is_main: false,
+      ...(activeVersionId ? { created_from_version_id: activeVersionId } : {})
+    };
+
+    try {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      console.log("[branches] insert start", branchInsert);
+      console.log("attempting insert");
+      const { data, error: insertError } = await supabase
+        .from("branches")
+        .insert(branchInsert)
+        .select("id, repo_id, name, created_from_version_id, is_main, created_at")
+        .single();
+      console.log("[branches] insert end", { data, insertError });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (!data) {
+        throw new Error("Branch insert did not return a row.");
+      }
+
+      const nextBranch = toBranchOption(data, repo.id);
+      setBranches((current) => {
+        const nextBranches = [...current, nextBranch];
+        const main = nextBranches.find((branch) => branch.is_main) ?? nextBranch;
+        const others = nextBranches
+          .filter((branch) => !branch.is_main)
+          .sort((first, second) => first.name.localeCompare(second.name));
+
+        return [main, ...others];
+      });
+      syncEditorToBranch(nextBranch);
+    } catch (branchError) {
+      console.error("[branches] insert failed", branchError);
+      throw branchError instanceof Error ? branchError : new Error(String(branchError));
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
       <section className="flex min-w-0 flex-col gap-6">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-6">
+          <div className="flex min-w-0 items-center gap-2 text-sm font-medium tracking-wide text-ink">
+            <Link href="/dashboard" className="shrink-0">
+              Pupitar
+            </Link>
+            <span className="text-muted">/</span>
+            <span className="shrink-0 text-muted">suprith</span>
+            <span className="text-muted">/</span>
+            <span className="truncate">{repo.name}</span>
+            <BranchSwitcher
+              branches={branches}
+              currentBranch={currentBranch}
+              onSelectBranch={syncEditorToBranch}
+              onCreateBranch={createBranch}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            {deployedVersionLabel == null ? null : (
+              <span
+                className={`rounded-sm border px-2.5 py-1 font-mono text-xs ${
+                  deployFeedback ? "border-accent text-accent" : "border-accent text-accent"
+                }`}
+              >
+                {deployedVersionLabel}
+              </span>
+            )}
+            <UserAvatar />
+          </div>
+        </header>
+
         <div className="flex flex-wrap items-baseline gap-2 border-b border-line pb-4">
           <h1 className="break-words text-2xl font-semibold text-ink">{repo.name}</h1>
           <span className="font-mono text-sm text-muted">/ prompt.md</span>
         </div>
 
-        {isPreviewing ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-panel p-3">
-            <p className="text-sm text-muted">
-              Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
-              - this is read only
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={exitPreview}
-                className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onRestore}
-                disabled={isCommitting}
-                className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isCommitting ? "Restoring..." : "Restore this version"}
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        <textarea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          readOnly={isPreviewing}
-          spellCheck={false}
-          className={`min-h-[520px] w-full resize-none rounded-md border bg-[#0d0d10] p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-accent read-only:text-muted ${
-            isPreviewing ? "border-accent/70" : "border-line"
-          }`}
-          placeholder="Write the system prompt..."
-        />
-
-        <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onCommit}>
-          <input
-            value={commitMessage}
-            onChange={(event) => setCommitMessage(event.target.value)}
-            disabled={isPreviewing}
-            className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder="Commit message"
+        {isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
+          <DiffViewPanel
+            sourceVersion={diffSourceVersion}
+            currentVersion={currentBranchLatestVersion}
+            sourceVersionNumber={diffSourceVersionNumber ?? 0}
+            diffRows={diffRows}
+            onBack={exitDiffView}
           />
-          <button
-            type="submit"
-            disabled={isCommitting || isPreviewing}
-            className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isCommitting ? "Committing..." : "Commit"}
-          </button>
-        </form>
+        ) : (
+          <>
+            {isPreviewing ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-panel p-3">
+                <p className="text-sm text-muted">
+                  Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
+                  - this is read only
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={exitPreview}
+                    className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onRestore}
+                    disabled={isCommitting}
+                    className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isCommitting ? "Restoring..." : "Restore this version"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
-        <section className="border-t border-line pt-6">
-          <h2 className="text-sm font-medium text-ink">Playground</h2>
-          <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onRun}>
-            <input
-              value={testMessage}
-              onChange={(event) => setTestMessage(event.target.value)}
-              className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-              placeholder="Type a test message..."
+            <textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              readOnly={isPreviewing}
+              spellCheck={false}
+              className={`min-h-[520px] w-full resize-none rounded-md border bg-[#0d0d10] p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-accent read-only:text-muted ${
+                isPreviewing ? "border-accent/70" : "border-line"
+              }`}
+              placeholder="Write the system prompt..."
             />
-            <button
-              type="submit"
-              disabled={isRunning || !testMessage.trim()}
-              className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isRunning ? "Running..." : "Run"}
-            </button>
-          </form>
-          <div className="mt-4 min-h-32 rounded-md border border-line bg-panel p-4">
-            <p className={`whitespace-pre-wrap text-sm leading-6 ${playgroundError ? "text-accent" : "text-ink"}`}>
-              {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
-            </p>
-          </div>
-        </section>
 
-        {error ? <p className="text-sm leading-6 text-accent">{error}</p> : null}
-        {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
+            <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onCommit}>
+              <input
+                value={commitMessage}
+                onChange={(event) => setCommitMessage(event.target.value)}
+                disabled={isPreviewing}
+                className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
+                placeholder="Commit message"
+              />
+              <button
+                type="submit"
+                disabled={isCommitting || isPreviewing}
+                className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit"}
+              </button>
+            </form>
+
+            <section className="border-t border-line pt-6">
+              <h2 className="text-sm font-medium text-ink">Playground</h2>
+              <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onRun}>
+                <input
+                  value={testMessage}
+                  onChange={(event) => setTestMessage(event.target.value)}
+                  className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  placeholder="Type a test message..."
+                />
+                <button
+                  type="submit"
+                  disabled={isRunning || !testMessage.trim()}
+                  className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isRunning ? "Running..." : "Run"}
+                </button>
+              </form>
+              <div className="mt-4 min-h-32 rounded-md border border-line bg-panel p-4">
+                <p className={`whitespace-pre-wrap text-sm leading-6 ${playgroundError ? "text-accent" : "text-ink"}`}>
+                  {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
+                </p>
+              </div>
+            </section>
+
+            {error ? <p className="text-sm leading-6 text-accent">{error}</p> : null}
+            {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
+          </>
+        )}
       </section>
 
       <aside className="flex min-w-0 flex-col gap-6 border-line lg:border-l lg:pl-6">
@@ -394,33 +973,417 @@ export function RepoEditorShell({ repo, initialVersions }: RepoEditorShellProps)
 
         <section className="flex flex-col gap-3 border-t border-line pt-6">
           <h2 className="text-lg font-medium text-ink">History</h2>
-          {orderedVersions.length === 0 ? (
+          {currentBranchVersions.length === 0 ? (
             <p className="text-sm leading-6 text-muted">No commits yet.</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {orderedVersions.map((version) => (
-                <button
-                  key={version.id}
-                  type="button"
-                  onClick={() => loadVersion(version)}
-                  className={`rounded-md border p-3 text-left transition-colors ${
-                    previewVersion?.id === version.id || (!isPreviewing && activeVersionId === version.id)
-                      ? "border-accent bg-panel"
-                      : "border-line bg-transparent hover:border-accent"
-                  }`}
-                >
-                  <p className="break-words text-sm font-medium text-ink">
-                    {version.commit_message || "Untitled commit"}
-                  </p>
-                  <p className="mt-2 font-mono text-xs text-muted">
-                    {formatRelativeTime(version.created_at)}
-                  </p>
-                </button>
-              ))}
+              {currentBranchVersions.map((version) => {
+                const isCurrent = previewVersion?.id === version.id || (!isPreviewing && activeVersionId === version.id);
+                const isMainVersion = isLegacyMainVersion(version, currentBranch?.is_main ? currentBranch.id : null);
+
+                return (
+                  <div
+                    key={version.id}
+                    className={`flex items-stretch gap-2 rounded-md border p-3 transition-colors ${
+                      isCurrent ? "border-accent bg-panel" : "border-line bg-transparent hover:border-accent"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => loadVersion(version)}
+                      className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                    >
+                      <span
+                        className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                          isMainVersion ? "bg-[#73737d]" : "bg-violet-500"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-medium text-ink">
+                          {version.commit_message || "Untitled commit"}
+                        </p>
+                        <p className="mt-2 font-mono text-xs text-muted">
+                          {formatRelativeTime(version.created_at)}
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openDiff(version)}
+                      className="shrink-0 self-start rounded-sm border border-line px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted transition-colors hover:border-accent hover:text-accent"
+                    >
+                      Diff
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
       </aside>
     </div>
+  );
+}
+
+function BranchSwitcher({
+  branches,
+  currentBranch,
+  onSelectBranch,
+  onCreateBranch
+}: {
+  branches: BranchOption[];
+  currentBranch: BranchOption | null;
+  onSelectBranch: (branch: BranchOption) => void;
+  onCreateBranch: (name: string) => Promise<void>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [error, setError] = useState("");
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function onDocumentClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setIsCreating(false);
+        setIsCreateFormOpen(false);
+        setError("");
+      }
+    }
+
+    if (!isOpen) {
+      return undefined;
+    }
+
+    document.addEventListener("mousedown", onDocumentClick);
+    return () => document.removeEventListener("mousedown", onDocumentClick);
+  }, [isOpen]);
+
+  function closeMenu() {
+    setIsOpen(false);
+    setIsCreating(false);
+    setIsCreateFormOpen(false);
+    setBranchName("");
+    setError("");
+  }
+
+  async function handleCreateBranch() {
+    setError("");
+
+    const trimmed = branchName.trim();
+    if (!trimmed) {
+      setError("Branch name is required.");
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      await onCreateBranch(trimmed);
+      closeMenu();
+    } catch (createError) {
+      const message =
+        createError instanceof Error
+          ? createError.message
+          : typeof createError === "object" && createError !== null && "message" in createError
+            ? String((createError as { message?: unknown }).message)
+            : "Could not create branch.";
+      setError(message);
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  if (!currentBranch) {
+    return null;
+  }
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        className="ml-3 inline-flex items-center gap-1 rounded-sm border border-line bg-panel px-3 py-1.5 text-xs font-medium tracking-normal text-ink transition-colors hover:border-accent hover:text-accent"
+      >
+        <span className="max-w-28 truncate">{currentBranch.name}</span>
+        <ChevronDownIcon />
+      </button>
+
+      {isOpen ? (
+        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-20 w-64 rounded-md border border-line bg-panel p-2 shadow-2xl shadow-black/30">
+          <div className="flex flex-col gap-1">
+            {branches.map((branch) => {
+              const isSelected = branch.id === currentBranch.id;
+
+              return (
+                <button
+                  key={branch.id ?? branch.name}
+                  type="button"
+                  onClick={() => {
+                    onSelectBranch(branch);
+                    closeMenu();
+                  }}
+                  className={`flex items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors ${
+                    isSelected ? "bg-surface text-ink" : "text-muted hover:bg-surface hover:text-ink"
+                  }`}
+                >
+                  <span className="truncate">{branch.name}</span>
+                  {branch.is_main ? (
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                      main
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-2 border-t border-line pt-2">
+            {isCreateFormOpen ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  autoFocus
+                  value={branchName}
+                  onChange={(event) => setBranchName(event.target.value)}
+                  placeholder="new-branch-name"
+                  className="rounded-sm border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                />
+                {error ? <p className="px-1 text-xs leading-5 text-accent">{error}</p> : null}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCreateBranch}
+                    disabled={isCreating}
+                    className="rounded-sm border border-accent bg-accent px-3 py-1.5 text-xs font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isCreating ? "Creating..." : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeMenu}
+                    className="rounded-sm border border-line px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsCreateFormOpen(true)}
+                className="w-full rounded-sm px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+              >
+                + New branch
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3.5 w-3.5 text-muted"
+    >
+      <path
+        d="M5 8l5 5 5-5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UserAvatar() {
+  return (
+    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-sm font-medium text-ink">
+      S
+    </div>
+  );
+}
+
+function DiffViewPanel({
+  sourceVersion,
+  currentVersion,
+  sourceVersionNumber,
+  diffRows,
+  onBack
+}: {
+  sourceVersion: PromptVersion;
+  currentVersion: PromptVersion;
+  sourceVersionNumber: number;
+  diffRows: DiffLineRow[];
+  onBack: () => void;
+}) {
+  const hasChanges = diffRows.some((row) => row.kind !== "equal");
+
+  return (
+    <section className="flex flex-col gap-4 rounded-md border border-line bg-panel p-5">
+      <div className="flex items-center justify-between gap-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-sm border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+        >
+          ← Back to editor
+        </button>
+        <p className="font-mono text-xs text-muted">Comparing v{sourceVersionNumber} → current</p>
+      </div>
+
+      <div className="grid gap-3 rounded-md border border-line bg-surface p-3 text-xs text-muted sm:grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <p className="text-ink">{sourceVersion.commit_message || "Untitled commit"}</p>
+          <p className="font-mono">{formatRelativeTime(sourceVersion.created_at)}</p>
+        </div>
+        <div className="flex flex-col gap-1 sm:text-right">
+          <p className="text-ink">current</p>
+          <p className="font-mono">{formatRelativeTime(currentVersion.created_at)}</p>
+        </div>
+      </div>
+
+      {hasChanges ? (
+        <div className="max-h-[70vh] overflow-auto rounded-md border border-line bg-[#0d0d10]">
+          <div className="grid grid-cols-2 gap-px">
+            <div className="border-b border-line/80 px-3 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted">
+              Older version
+            </div>
+            <div className="border-b border-line/80 px-3 py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted">
+              Current
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            {diffRows.map((row, index) => (
+              <DiffRowView key={`${row.kind}-${index}`} row={row} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-md border border-line bg-surface px-4 py-8 text-center text-sm text-muted">
+          No changes between these versions
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DiffRowView({ row }: { row: DiffLineRow }) {
+  const rowClasses =
+    "min-h-9 px-3 py-2 font-mono text-sm leading-6 whitespace-pre-wrap break-words";
+
+  if (row.kind === "equal") {
+    return (
+      <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
+        <div className={rowClasses}>{row.oldLine || " "}</div>
+        <div className={rowClasses}>{row.newLine || " "}</div>
+      </div>
+    );
+  }
+
+  if (row.kind === "delete") {
+    return (
+      <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
+        <div className={`${rowClasses} bg-[#2a1010] text-red-100`}>
+          <span className="mr-2 text-red-300">-</span>
+          <span>{row.oldLine || " "}</span>
+        </div>
+        <div className={rowClasses} />
+      </div>
+    );
+  }
+
+  if (row.kind === "insert") {
+    return (
+      <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
+        <div className={rowClasses} />
+        <div className={`${rowClasses} bg-[#0f2a10] text-green-100`}>
+          <span className="mr-2 text-green-300">+</span>
+          <span>{row.newLine || " "}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
+      <div className={`${rowClasses} bg-[#2a1010] text-red-100`}>
+        <span className="mr-2 text-red-300">-</span>
+        <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="old" />
+      </div>
+      <div className={`${rowClasses} bg-[#0f2a10] text-green-100`}>
+        <span className="mr-2 text-green-300">+</span>
+        <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="new" />
+      </div>
+    </div>
+  );
+}
+
+function InlineDiffText({
+  oldLine,
+  newLine,
+  side
+}: {
+  oldLine: string;
+  newLine: string;
+  side: "old" | "new";
+}) {
+  const parts = getInlineDiffParts(oldLine, newLine);
+
+  return (
+    <>
+      {parts.map(([op, text], index) => {
+        if (!text) {
+          return null;
+        }
+
+        if (side === "old") {
+          if (op === 1) {
+            return null;
+          }
+
+          if (op === -1) {
+            return (
+              <span
+                key={index}
+                className="rounded-sm bg-[#4a1515] px-0.5 text-red-50"
+              >
+                {text}
+              </span>
+            );
+          }
+
+          return <span key={index}>{text}</span>;
+        }
+
+        if (op === -1) {
+          return null;
+        }
+
+        if (op === 1) {
+          return (
+            <span
+              key={index}
+              className="rounded-sm bg-[#144a15] px-0.5 text-green-50"
+            >
+              {text}
+            </span>
+          );
+        }
+
+        return <span key={index}>{text}</span>;
+      })}
+    </>
   );
 }

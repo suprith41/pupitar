@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
-import { DashboardShell } from "./dashboard-shell";
+import DashboardShell from "./dashboard-shell";
 
 export default async function DashboardPage() {
   if (!hasSupabaseConfig()) {
