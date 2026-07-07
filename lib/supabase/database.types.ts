@@ -6,7 +6,7 @@ export type Database = {
       repos: {
         Row: {
           id: string;
-          owner_id: string;
+          owner_id: string | null;
           name: string;
           description: string | null;
           is_public: boolean;
@@ -14,7 +14,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          owner_id: string;
+          owner_id?: string | null;
           name: string;
           description?: string | null;
           is_public?: boolean;
@@ -22,7 +22,7 @@ export type Database = {
         };
         Update: {
           id?: string;
-          owner_id?: string;
+          owner_id?: string | null;
           name?: string;
           description?: string | null;
           is_public?: boolean;

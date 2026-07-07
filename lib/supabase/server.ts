@@ -17,7 +17,7 @@ export async function createClient() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // Server Components cannot set cookies. Middleware keeps sessions fresh.
+          // Server Components cannot set cookies.
         }
       }
     }

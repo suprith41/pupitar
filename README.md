@@ -40,6 +40,8 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+If you start Uvicorn from the repository root instead, use `uvicorn main:app --reload` there as well; the root-level [main.py](main.py) now forwards to [backend/main.py](backend/main.py).
+
 Run `source .venv/bin/activate` as one command. If virtual environment creation is interrupted, remove the partial `backend/.venv` directory and run `python3 -m venv .venv` again.
 
 The backend runs at `http://localhost:8000`.
