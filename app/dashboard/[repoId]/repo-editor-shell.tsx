@@ -348,6 +348,7 @@ export default function RepoEditorShell({
 
     setSelectedBranchId(branch?.id ?? null);
     setPreviewVersion(null);
+    setDiffVersionId(null);
     setCommitMessage("");
     setStatus("");
     setError("");
@@ -377,7 +378,7 @@ export default function RepoEditorShell({
         parent_version_id: activeVersionId
       })
       .select(
-        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, created_at"
+        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
       )
       .single();
 
@@ -509,7 +510,9 @@ export default function RepoEditorShell({
   }
 
   function loadVersion(version: PromptVersion) {
+    setActiveTab("editor");
     setPreviewVersion(version);
+    setDiffVersionId(null);
     setContent(version.content);
     setModel(version.model);
     setTemperature(version.temperature);
@@ -524,6 +527,7 @@ export default function RepoEditorShell({
   }
 
   function openDiff(version: PromptVersion) {
+    setActiveTab("editor");
     setDiffVersionId(version.id);
     setPreviewVersion(null);
     setStatus("");
@@ -647,11 +651,7 @@ export default function RepoEditorShell({
         throw new Error(payload?.detail || "Generate evals failed.");
       }
 
-      if (Array.isArray(payload?.cases)) {
-        setEvalCases((current) => [...current, ...payload.cases]);
-      } else {
-        await refreshEvalCases();
-      }
+      await refreshEvalCases();
 
       setGeneratePurpose("");
       setIsGenerateModalOpen(false);
@@ -794,102 +794,303 @@ export default function RepoEditorShell({
           </div>
         </header>
 
-        <div className="flex flex-wrap items-baseline gap-2 border-b border-line pb-4">
-          <h1 className="break-words text-2xl font-semibold text-ink">{repo.name}</h1>
-          <span className="font-mono text-sm text-muted">/ prompt.md</span>
+        <div className="flex items-center gap-2 border-b border-line pb-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab("editor")}
+            className={`rounded-sm px-3 py-1.5 text-sm transition-colors ${
+              activeTab === "editor"
+                ? "bg-panel text-ink"
+                : "text-muted hover:text-ink"
+            }`}
+          >
+            Editor
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("evals")}
+            className={`rounded-sm px-3 py-1.5 text-sm transition-colors ${
+              activeTab === "evals"
+                ? "bg-panel text-ink"
+                : "text-muted hover:text-ink"
+            }`}
+          >
+            Evals
+          </button>
         </div>
 
-        {isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
-          <DiffViewPanel
-            sourceVersion={diffSourceVersion}
-            currentVersion={currentBranchLatestVersion}
-            sourceVersionNumber={diffSourceVersionNumber ?? 0}
-            diffRows={diffRows}
-            onBack={exitDiffView}
-          />
-        ) : (
+        {activeTab === "editor" ? (
           <>
-            {isPreviewing ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-panel p-3">
-                <p className="text-sm text-muted">
-                  Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
-                  - this is read only
+            <div className="flex flex-wrap items-baseline gap-2">
+              <h1 className="break-words text-2xl font-semibold text-ink">{repo.name}</h1>
+              <span className="font-mono text-sm text-muted">/ prompt.md</span>
+            </div>
+
+            {isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
+              <DiffViewPanel
+                sourceVersion={diffSourceVersion}
+                currentVersion={currentBranchLatestVersion}
+                sourceVersionNumber={diffSourceVersionNumber ?? 0}
+                diffRows={diffRows}
+                onBack={exitDiffView}
+              />
+            ) : (
+              <>
+                {isPreviewing ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-panel p-3">
+                    <p className="text-sm text-muted">
+                      Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
+                      - this is read only
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={exitPreview}
+                        className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onRestore}
+                        disabled={isCommitting}
+                        className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isCommitting ? "Restoring..." : "Restore this version"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <textarea
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  readOnly={isPreviewing}
+                  spellCheck={false}
+                  className={`min-h-[520px] w-full resize-none rounded-md border bg-[#0d0d10] p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-accent read-only:text-muted ${
+                    isPreviewing ? "border-accent/70" : "border-line"
+                  }`}
+                  placeholder="Write the system prompt..."
+                />
+
+                <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onCommit}>
+                  <input
+                    value={commitMessage}
+                    onChange={(event) => setCommitMessage(event.target.value)}
+                    disabled={isPreviewing}
+                    className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    placeholder="Commit message"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isCommitting || isPreviewing}
+                    className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit"}
+                  </button>
+                </form>
+
+                <section className="border-t border-line pt-6">
+                  <h2 className="text-sm font-medium text-ink">Playground</h2>
+                  <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onRun}>
+                    <input
+                      value={testMessage}
+                      onChange={(event) => setTestMessage(event.target.value)}
+                      className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                      placeholder="Type a test message..."
+                    />
+                    <button
+                      type="submit"
+                      disabled={isRunning || !testMessage.trim()}
+                      className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isRunning ? "Running..." : "Run"}
+                    </button>
+                  </form>
+                  <div className="mt-4 min-h-32 rounded-md border border-line bg-panel p-4">
+                    <p className={`whitespace-pre-wrap text-sm leading-6 ${playgroundError ? "text-accent" : "text-ink"}`}>
+                      {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
+                    </p>
+                  </div>
+                </section>
+
+                {error ? <p className="text-sm leading-6 text-accent">{error}</p> : null}
+                {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
+              </>
+            )}
+          </>
+        ) : (
+          <section className="flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-2xl font-semibold text-ink">Evals</p>
+                <p className="mt-1 text-sm text-muted">Run repo-specific cases against the current branch.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGenerateModalOpen(true)}
+                  className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  AI generate
+                </button>
+                <button
+                  type="button"
+                  onClick={runEvals}
+                  disabled={isRunningEvals || evalCases.length === 0 || !currentBranchLatestVersion}
+                  className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isRunningEvals
+                    ? `Running ${evalCases.length} evals...`
+                    : "Run evals"}
+                </button>
+              </div>
+            </div>
+
+            {evalRunSummary ? (
+              <div className="rounded-md border border-line bg-panel p-4">
+                <p className="font-mono text-sm text-ink">
+                  {evalRunSummary.score} / {evalRunSummary.total} passed
                 </p>
-                <div className="flex gap-2">
+              </div>
+            ) : null}
+
+            <div className="rounded-md border border-line bg-panel p-4">
+              <div className="flex flex-col gap-3">
+                {evalCases.length === 0 ? (
+                  <p className="text-sm text-muted">No eval cases yet.</p>
+                ) : (
+                  evalCases.map((evalCase) => {
+                    const result = evalRunResults?.find((item) => item.eval_case_id === evalCase.id);
+                    return (
+                      <div key={evalCase.id} className="rounded-md border border-line bg-surface p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm text-ink">{evalCase.input}</p>
+                            <p className="mt-2 text-sm text-muted">Expected: {evalCase.expected_outcome}</p>
+                            {evalCase.description ? (
+                              <p className="mt-2 text-xs text-muted">{evalCase.description}</p>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {result ? (
+                              <span
+                                className={`rounded-sm border px-2 py-1 font-mono text-[11px] ${
+                                  result.passed
+                                    ? "border-green-900 bg-[#0f2a10] text-green-200"
+                                    : "border-red-900 bg-[#2a1010] text-red-200"
+                                }`}
+                              >
+                                {result.verdict}
+                              </span>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => deleteEvalCase(evalCase.id)}
+                              className="rounded-sm border border-line px-2 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+                            >
+                              X
+                            </button>
+                          </div>
+                        </div>
+                        {result ? (
+                          <div className="mt-3 border-t border-line pt-3">
+                            <p className="font-mono text-xs text-muted">{result.response || "No response"}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-line bg-panel p-4">
+              <p className="mb-4 text-sm font-medium text-ink">Add eval case</p>
+              <div className="grid gap-3">
+                <input
+                  value={newEvalInput}
+                  onChange={(event) => setNewEvalInput(event.target.value)}
+                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  placeholder="Test input"
+                />
+                <input
+                  value={newEvalExpectedOutcome}
+                  onChange={(event) => setNewEvalExpectedOutcome(event.target.value)}
+                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  placeholder="Expected outcome"
+                />
+                <input
+                  value={newEvalDescription}
+                  onChange={(event) => setNewEvalDescription(event.target.value)}
+                  className="rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                  placeholder="Description"
+                />
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={exitPreview}
-                    className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                    onClick={addEvalCase}
+                    disabled={isAddingEvalCase}
+                    className="rounded-sm border border-accent bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Cancel
+                    {isAddingEvalCase ? "Adding..." : "Add"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={onRestore}
-                    disabled={isCommitting}
-                    className="rounded-sm border border-accent bg-accent px-3 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isCommitting ? "Restoring..." : "Restore this version"}
-                  </button>
+                  {evalError ? <p className="text-sm text-accent">{evalError}</p> : null}
+                </div>
+              </div>
+            </div>
+
+            {isGenerateModalOpen ? (
+              <div className="fixed inset-0 z-40 flex items-center justify-center bg-surface/80 px-6 py-8">
+                <div className="w-full max-w-md rounded-md border border-line bg-panel p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-medium text-ink">AI generate</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsGenerateModalOpen(false);
+                        setGenerateError("");
+                      }}
+                      className="rounded-sm border border-line px-2.5 py-1 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <p className="mt-3 text-sm text-muted">
+                    Describe your prompt&apos;s purpose in one sentence
+                  </p>
+                  <textarea
+                    value={generatePurpose}
+                    onChange={(event) => setGeneratePurpose(event.target.value)}
+                    className="mt-4 min-h-28 w-full resize-none rounded-sm border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="e.g. help support agents decide whether to approve a refund"
+                  />
+                  {generateError ? <p className="mt-3 text-sm text-accent">{generateError}</p> : null}
+                  <div className="mt-4 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={generateEvalCases}
+                      disabled={isGeneratingEvals}
+                      className="rounded-sm border border-accent bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isGeneratingEvals ? "Generating..." : "Generate"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsGenerateModalOpen(false);
+                        setGenerateError("");
+                      }}
+                      className="rounded-sm border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : null}
 
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              readOnly={isPreviewing}
-              spellCheck={false}
-              className={`min-h-[520px] w-full resize-none rounded-md border bg-[#0d0d10] p-5 font-mono text-sm leading-7 text-ink outline-none transition-colors placeholder:text-muted focus:border-accent read-only:text-muted ${
-                isPreviewing ? "border-accent/70" : "border-line"
-              }`}
-              placeholder="Write the system prompt..."
-            />
-
-            <form className="grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onCommit}>
-              <input
-                value={commitMessage}
-                onChange={(event) => setCommitMessage(event.target.value)}
-                disabled={isPreviewing}
-                className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
-                placeholder="Commit message"
-              />
-              <button
-                type="submit"
-                disabled={isCommitting || isPreviewing}
-                className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit"}
-              </button>
-            </form>
-
-            <section className="border-t border-line pt-6">
-              <h2 className="text-sm font-medium text-ink">Playground</h2>
-              <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={onRun}>
-                <input
-                  value={testMessage}
-                  onChange={(event) => setTestMessage(event.target.value)}
-                  className="rounded-sm border border-line bg-panel px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-                  placeholder="Type a test message..."
-                />
-                <button
-                  type="submit"
-                  disabled={isRunning || !testMessage.trim()}
-                  className="rounded-sm border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isRunning ? "Running..." : "Run"}
-                </button>
-              </form>
-              <div className="mt-4 min-h-32 rounded-md border border-line bg-panel p-4">
-                <p className={`whitespace-pre-wrap text-sm leading-6 ${playgroundError ? "text-accent" : "text-ink"}`}>
-                  {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
-                </p>
-              </div>
-            </section>
-
-            {error ? <p className="text-sm leading-6 text-accent">{error}</p> : null}
-            {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
-          </>
+          </section>
         )}
       </section>
 
@@ -1003,6 +1204,11 @@ export default function RepoEditorShell({
                         <p className="break-words text-sm font-medium text-ink">
                           {version.commit_message || "Untitled commit"}
                         </p>
+                        {version.eval_score != null && version.eval_total != null ? (
+                          <p className="mt-1 font-mono text-xs text-muted">
+                            {version.eval_score}/{version.eval_total}
+                          </p>
+                        ) : null}
                         <p className="mt-2 font-mono text-xs text-muted">
                           {formatRelativeTime(version.created_at)}
                         </p>
