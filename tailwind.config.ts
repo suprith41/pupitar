@@ -6,7 +6,7 @@ const config: Config = {
     extend: {
       colors: {
         surface: "#FFFFFF",
-        bg: "#FFFFFF",
+        bg: "#FCFBF7",
         panel: "#FFFFFF",
         line: "#E1E4EA",
         ink: "#000000",

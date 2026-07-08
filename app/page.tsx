@@ -142,7 +142,7 @@ export default function Home() {
             1 prompt. Every version.
           </p>
           <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[0.92] tracking-[-0.04em] md:text-[104px]">
-            Your Fast-Track Into <span className="text-accent">Reliable AI Prompts.</span>
+            Your Fast-Track Into Reliable AI Prompts.
           </h1>
           <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
             Version control, evals, branching, and live deploys for prompts your users depend on.
