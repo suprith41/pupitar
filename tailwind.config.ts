@@ -6,20 +6,21 @@ const config: Config = {
     extend: {
       colors: {
         surface: "#FFFFFF",
-        bg: "#F5F0E8",
-        panel: "#EDE9E0",
-        line: "#D6D0C4",
-        ink: "#111111",
-        muted: "#6B7280",
-        accent: "#3B5CFF",
-        "accent-hover": "#2A47E0",
-        nav: "#0D1117",
-        error: "#DC2626",
-        success: "#16A34A"
+        bg: "#FFFFFF",
+        panel: "#FFFFFF",
+        line: "#E1E4EA",
+        ink: "#000000",
+        muted: "#706E6E",
+        accent: "#2067FF",
+        "accent-hover": "#2F6BFF",
+        nav: "#0E1116",
+        error: "#B42318",
+        success: "#1D7F4D"
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "monospace"]
+        sans: ["Source Serif 4", "Georgia", "serif"],
+        heading: ["DM Sans", "Arial", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"]
       },
       borderRadius: {
         sm: "6px",
@@ -30,9 +31,10 @@ const config: Config = {
       },
       boxShadow: {
         subtle: "0 1px 3px rgba(0, 0, 0, 0.06)",
-        card: "0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)",
-        elevated: "0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
-        blue: "0 4px 14px rgba(59, 92, 255, 0.3)"
+        card: "0 10px 24px rgba(0, 11, 28, 0.06)",
+        elevated: "0 18px 34px rgba(0, 11, 28, 0.12)",
+        blue: "0 10px 24px rgba(32, 103, 255, 0.18)",
+        zf: "0 10px 24px rgba(0, 11, 28, 0.06)"
       }
     }
   },

@@ -233,7 +233,7 @@ function NewRepoModal({
               required
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
+              className="rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
               placeholder="my-prompt-repo"
             />
           </label>
@@ -243,7 +243,7 @@ function NewRepoModal({
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="min-h-28 resize-none rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
+              className="min-h-28 resize-none rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
             />
           </label>
 

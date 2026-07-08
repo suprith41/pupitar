@@ -1086,7 +1086,7 @@ export default function RepoEditorShell({
                   onChange={(event) => setContent(event.target.value)}
                   readOnly={isPreviewing}
                   spellCheck={false}
-                  className={`min-h-[520px] w-full resize-none rounded-lg border-2 bg-surface p-5 font-mono text-sm leading-7 text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)] read-only:text-muted ${
+                  className={`min-h-[520px] w-full resize-none rounded-lg border-2 bg-surface p-5 font-mono text-sm leading-7 text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)] read-only:text-muted ${
                     isPreviewing ? "border-accent/50" : "border-line"
                   }`}
                   placeholder="Write the system prompt..."
@@ -1097,7 +1097,7 @@ export default function RepoEditorShell({
                     value={commitMessage}
                     onChange={(event) => setCommitMessage(event.target.value)}
                     disabled={isPreviewing}
-                    className="min-w-0 flex-1 rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-0 flex-1 rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="Commit message"
                   />
                   <button
@@ -1322,7 +1322,7 @@ export default function RepoEditorShell({
             <select
               value={model}
               onChange={(event) => setModel(event.target.value)}
-              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
+              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
             >
               {models.map((modelName) => (
                 <option key={modelName} value={modelName}>
@@ -1355,7 +1355,7 @@ export default function RepoEditorShell({
               min="1"
               value={maxTokens}
               onChange={(event) => setMaxTokens(Number(event.target.value))}
-              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
+              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
             />
           </label>
 

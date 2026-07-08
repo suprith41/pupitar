@@ -3,79 +3,94 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const badges = [
-  "Branching",
-  "Eval-gated merges",
-  "Version history",
-  "Live API endpoint",
-  "Diff view",
-  "Playground",
-  "Prompt versioning",
-  "Deploy in one click",
-  "Restore any version",
-  "AI eval generation"
+const heroTiles = [
+  { title: "prompt.md", meta: "main", tone: "bg-accent text-white" },
+  { title: "evals", meta: "12 passing", tone: "bg-white text-ink" },
+  { title: "branch", meta: "checkout safer-copy", tone: "bg-[#eaf1fb] text-ink" },
+  { title: "diff", meta: "+ clearer tone", tone: "bg-white text-ink" },
+  { title: "deploy", meta: "live endpoint", tone: "bg-accent text-white" },
+  { title: "history", meta: "restore v08", tone: "bg-panel text-ink" }
 ];
 
-const features = [
+const proofCards = [
   {
-    label: "BRANCHING",
-    heading: "Ship without breaking production.",
-    body: "Create a branch, experiment freely, merge only when your eval suite passes. Your live prompt stays safe."
+    title: "Every serious AI team creates versions.",
+    body: "Prompt changes are product changes. Pupitar keeps every experiment visible, reversible, and ready to compare."
   },
   {
-    label: "EVALS",
-    heading: "Prove every change before it ships.",
-    body: "Write test cases or auto-generate them with AI. Run them against any version and see exactly what changed."
+    title: "The best builders test before they ship.",
+    body: "Run evals against any prompt version and merge only when the behavior earns its way into production."
   },
   {
-    label: "DEPLOY",
-    heading: "One click from prompt to live API.",
-    body: "Get a real API endpoint for your deployed prompt. Call it from anywhere with an API key."
+    title: "Shipping should feel calm.",
+    body: "Deploy the approved prompt to a live endpoint without losing the trail of what changed and why."
   }
 ];
 
-const steps = [
+const whyCards = [
   {
-    number: "1",
-    heading: "Write",
-    body: "Write your system prompt in the editor."
+    quote: "I want to try a risky prompt without touching production.",
+    answer: "Create a branch, edit freely, then compare the result against main."
   },
   {
-    number: "2",
-    heading: "Branch",
-    body: "Create a branch to experiment safely."
+    quote: "I need proof this prompt still behaves.",
+    answer: "Generate or write eval cases and see pass/fail results before merging."
   },
   {
-    number: "3",
-    heading: "Eval",
-    body: "Run test cases. See pass/fail instantly."
-  },
-  {
-    number: "4",
-    heading: "Deploy",
-    body: "Ship to a live API endpoint with one click."
+    quote: "I shipped something worse and need to go back.",
+    answer: "Open history, inspect the diff, and restore a known-good version."
   }
 ];
 
-const faqs = [
+const programSteps = [
+  "Write the system prompt in a clean editor.",
+  "Branch when you want to explore a new direction.",
+  "Run evals to catch regressions before they reach users.",
+  "Deploy the winning version as a live API endpoint."
+];
+
+const faqItems = [
   {
-    question: "Is this just another PromptLayer?",
-    answer:
-      "No. PromptLayer logs prompts. Pupitar versions them like Git - with branching, diffs, and eval-gated merges that block bad deploys automatically."
+    question: "Is Pupitar only for engineers?",
+    answer: "No. If you can write a prompt, you can create versions, run evals, and deploy from Pupitar."
   },
   {
-    question: "Do I need to know how to code?",
-    answer: "No. If you can write a prompt, you can use Pupitar."
+    question: "How is this different from a prompt log?",
+    answer: "Logs show what happened. Pupitar lets you branch, compare, test, merge, restore, and deploy prompts like product assets."
   },
   {
-    question: "Is it free?",
-    answer: "Free to start. No credit card required."
+    question: "Can I test prompt changes before shipping?",
+    answer: "Yes. Pupitar is built around eval-gated changes, so a version can prove itself before it becomes live."
   },
   {
-    question: "What models does it support?",
-    answer: "Any model via Groq - llama-3.3-70b, llama-3.1-8b, and more coming soon."
+    question: "Can I restore an older prompt?",
+    answer: "Yes. Version history and diffs are core to the product, so you can return to a known-good prompt quickly."
   }
 ];
+
+function ProductTile({
+  title,
+  meta,
+  tone,
+  index
+}: {
+  title: string;
+  meta: string;
+  tone: string;
+  index: number;
+}) {
+  return (
+    <div
+      className={`zf-image-card min-h-[150px] rounded-[18px] border border-line p-5 shadow-zf ${tone}`}
+      style={{ animationDelay: `${index * 90}ms` }}
+    >
+      <div className="flex h-full flex-col justify-between gap-8">
+        <p className="font-mono text-[12px] uppercase tracking-[0.16em] opacity-60">{meta}</p>
+        <h3 className="text-[30px] leading-[1] tracking-[-0.02em]">{title}</h3>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -83,7 +98,7 @@ export default function Home() {
 
   useEffect(() => {
     function onScroll() {
-      setIsScrolled(window.scrollY > 8);
+      setIsScrolled(window.scrollY > 10);
     }
 
     onScroll();
@@ -92,198 +107,145 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-bg text-ink">
-      <style>{`
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-
-        @keyframes scroll-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-
-        .marquee-left {
-          animation: scroll-left 25s linear infinite;
-        }
-
-        .marquee-right {
-          animation: scroll-right 25s linear infinite;
-        }
-
-        @keyframes fade-up {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-up {
-          animation: fade-up 0.7s ease-out both;
-        }
-
-        .animate-fade-up-delay-1 {
-          animation: fade-up 0.7s ease-out 0.15s both;
-        }
-
-        .animate-fade-up-delay-2 {
-          animation: fade-up 0.7s ease-out 0.3s both;
-        }
-      `}</style>
-
-      {/* Navigation - Dark nav inspired by Root Fifteen */}
+    <main className="min-h-screen overflow-hidden bg-bg text-ink">
       <header
-        className={`sticky top-0 z-30 w-full bg-nav transition-shadow ${
-          isScrolled ? "shadow-elevated" : ""
+        className={`sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md transition-shadow duration-300 ${
+          isScrolled ? "shadow-zf" : ""
         }`}
       >
-        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-4 md:px-10">
-          <Link href="/" className="text-[18px] font-extrabold tracking-[-0.04em] text-white uppercase">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-5 px-5 py-4 md:px-8">
+          <Link href="/" className="text-[22px] font-bold tracking-[-0.02em] text-accent">
             Pupitar
           </Link>
 
-          <nav className="flex items-center gap-8">
-            <a href="#features" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
-              Features
+          <nav className="hidden items-center gap-8 text-[17px] text-[#363636] md:flex">
+            <a className="zf-link" href="#about">
+              About
             </a>
-            <a href="#how-it-works" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
-              How it works
+            <a className="zf-link" href="#program">
+              Program
             </a>
-            <a href="#faqs" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
+            <a className="zf-link" href="#faqs">
               FAQs
             </a>
           </nav>
 
-          <Link
-            href="/dashboard"
-            className="rounded-pill bg-accent px-[22px] py-2.5 text-[14px] font-bold text-white shadow-blue transition-all hover:bg-accent-hover hover:shadow-lg"
-          >
-            Get started →
+          <Link href="/dashboard" className="zf-button text-[16px]">
+            Open Pupitar
           </Link>
         </div>
       </header>
 
-      {/* Hero - Blue section inspired by ZFellows + Root Fifteen */}
-      <section className="bg-accent px-6 pb-20 pt-20 md:px-10 md:pb-28 md:pt-28">
-        <div className="mx-auto w-full max-w-[1100px]">
-          <div className="animate-fade-up">
-            <span className="inline-flex items-center rounded-pill border border-white/30 bg-white/10 px-4 py-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm">
-              Version Control for Prompts
-            </span>
-          </div>
-          <h1 className="animate-fade-up-delay-1 mt-6 max-w-[700px] text-[64px] font-black leading-[1.05] tracking-[-0.04em] text-white md:text-[80px]">
-            The GitHub
-            <br />
-            for AI Prompts.
-          </h1>
-          <p className="animate-fade-up-delay-2 mt-6 max-w-[500px] text-[18px] leading-[1.6] font-medium text-white/80">
-            Version control, branching, and eval-gated deploys for prompts and AI agents.
+      <section className="px-5 pb-14 pt-16 md:px-8 md:pb-20 md:pt-24">
+        <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center text-center">
+          <p className="zf-reveal text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
+            1 prompt. Every version.
           </p>
-          <Link
-            href="/dashboard"
-            className="animate-fade-up-delay-2 mt-8 inline-flex rounded-pill bg-white px-[28px] py-3.5 text-[15px] font-bold text-ink shadow-card transition-all hover:shadow-elevated hover:scale-[1.02]"
-          >
-            Get started →
+          <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[0.92] tracking-[-0.04em] md:text-[104px]">
+            Your Fast-Track Into <span className="text-accent">Reliable AI Prompts.</span>
+          </h1>
+          <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
+            Version control, evals, branching, and live deploys for prompts your users depend on.
+          </p>
+          <Link href="/dashboard" className="zf-button zf-reveal mt-8 text-[18px]">
+            Start building
           </Link>
         </div>
       </section>
 
-      {/* Marquee badges */}
-      <section className="overflow-hidden border-b border-line bg-bg py-5">
-        <div className="flex flex-col gap-3">
-          <div className="overflow-hidden">
-            <div className="marquee-left flex w-max items-center">
-              {[...badges, ...badges].map((badge, index) => (
-                <span
-                  key={`left-${badge}-${index}`}
-                  className="mr-3 whitespace-nowrap rounded-pill border border-line bg-surface px-5 py-2 text-[13px] font-medium text-ink shadow-subtle"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="overflow-hidden">
-            <div className="marquee-right flex w-max items-center">
-              {[...badges, ...badges].map((badge, index) => (
-                <span
-                  key={`right-${badge}-${index}`}
-                  className="mr-3 whitespace-nowrap rounded-pill border border-line bg-surface px-5 py-2 text-[13px] font-medium text-ink shadow-subtle"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-          </div>
+      <section aria-label="Pupitar product preview" className="px-5 pb-20 md:px-8">
+        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-2 gap-3 md:grid-cols-6 md:gap-4">
+          {heroTiles.map((tile, index) => (
+            <ProductTile key={tile.title} {...tile} index={index} />
+          ))}
         </div>
       </section>
 
-      {/* Pattern section - inspired by ZFellows text section */}
-      <section className="px-6 py-20 md:px-10 md:py-28">
-        <div className="mx-auto max-w-[900px]">
-          <h2 className="text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-ink md:text-[52px]">
-            There&apos;s a pattern among the best AI builders.
+      <section id="about" className="relative px-5 py-20 md:px-8 md:py-28">
+        <div className="pointer-events-none absolute left-1/2 top-8 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#75a9ff33] blur-3xl" />
+        <div className="mx-auto max-w-[980px] text-center">
+          <h2 className="zf-reveal relative text-[44px] leading-[1.03] tracking-[-0.035em] md:text-[76px]">
+            There&apos;s a pattern among the <span className="text-accent">best AI builders.</span>
           </h2>
-          <p className="mt-6 max-w-[600px] text-[18px] leading-[1.7] text-muted">
-            They all version-controlled their prompts. They tested before deploying. They treated prompts like code.
-          </p>
-          <p className="mt-8 max-w-[760px] text-[28px] italic font-light leading-[1.4] text-ink/70 md:text-[32px]" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
-            &ldquo;Success leaves clues — follow them.&rdquo;
-          </p>
+          <div className="relative mx-auto mt-8 max-w-[760px] space-y-4 text-[21px] leading-[1.55] text-[#363636] md:text-[26px]">
+            <p>They treat prompts like code.</p>
+            <p>They test changes before users feel them.</p>
+            <p className="text-ink">Success leaves clues. Follow them.</p>
+          </div>
+        </div>
+
+        <div className="relative mx-auto mt-14 grid w-full max-w-[1080px] gap-5 md:grid-cols-3">
+          {proofCards.map((card) => (
+            <article key={card.title} className="zf-card">
+              <h3 className="text-[26px] leading-[1.08] tracking-[-0.02em]">{card.title}</h3>
+              <p className="mt-5 text-[18px] leading-[1.55] text-ink/66">{card.body}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* Features - Card style inspired by Root Fifteen */}
-      <section id="features" className="px-6 pb-20 md:px-10 md:pb-28">
-        <div className="mx-auto w-full max-w-[1100px]">
-          <div className="grid gap-6 md:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.label}
-                className="rounded-xl border-2 border-ink/10 bg-surface p-8 shadow-card transition-all hover:border-accent/30 hover:shadow-elevated"
-              >
-                <span className="inline-flex rounded-pill bg-nav px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
-                  {feature.label}
-                </span>
-                <h3 className="mt-5 text-[22px] font-extrabold leading-[1.2] tracking-[-0.02em] text-ink">
-                  {feature.heading}
-                </h3>
-                <p className="mt-3 text-[15px] leading-[1.7] text-muted">{feature.body}</p>
+      <section className="bg-accent px-5 py-20 text-white md:px-8 md:py-28">
+        <div className="mx-auto max-w-[1080px] text-center">
+          <h2 className="text-[48px] leading-[0.98] tracking-[-0.035em] md:text-[82px]">
+            Pupitar connects early AI builders with production-grade prompt workflows.
+          </h2>
+          <div className="mx-auto mt-8 max-w-[760px] space-y-5 text-[21px] leading-[1.55] text-white/85 md:text-[25px]">
+            <p>Pupitar is for people turning prompts into real product behavior.</p>
+            <p>It gives you the confidence loop: create, compare, evaluate, merge, deploy, and restore.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto max-w-[1180px]">
+          <h2 className="max-w-[520px] text-[52px] leading-[0.95] tracking-[-0.035em] md:text-[92px]">
+            Why <span className="text-accent">Pupitar?</span>
+          </h2>
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {whyCards.map((card) => (
+              <article key={card.quote} className="zf-card group">
+                <p className="text-[24px] leading-[1.15] tracking-[-0.015em]">&ldquo;{card.quote}&rdquo;</p>
+                <p className="mt-8 border-t border-ink/12 pt-5 text-[18px] leading-[1.5] text-ink/68">
+                  {card.answer}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="program" className="bg-panel px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto grid max-w-[1080px] gap-8 md:grid-cols-[0.85fr_1.15fr]">
+          <div>
+            <p className="inline-flex rounded-full border border-accent/20 bg-white px-4 py-2 text-[13px] font-bold uppercase tracking-[0.18em] text-accent">
+              About the program
+            </p>
+            <h2 className="mt-5 text-[48px] leading-[1] tracking-[-0.035em] md:text-[78px]">
+              A short path from prompt idea to live endpoint.
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {programSteps.map((step, index) => (
+              <div key={step} className="zf-row">
+                <span className="font-mono text-[13px] text-ink/42">0{index + 1}</span>
+                <p className="text-[21px] leading-[1.35] md:text-[26px]">{step}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="bg-nav px-6 py-20 md:px-10 md:py-28">
-        <div className="mx-auto w-full max-w-[1000px]">
-          <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">How it works</span>
-          <h2 className="mt-4 max-w-[720px] text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-white md:text-[52px]">
-            From idea to production in minutes.
-          </h2>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-            {steps.map((step) => (
-              <div key={step.number} className="relative border-t border-white/15 pt-8">
-                <div className="text-[64px] font-black leading-none text-white/10">
-                  {step.number}
-                </div>
-                <h3 className="mt-3 text-[20px] font-bold text-white">
-                  {step.heading}
-                </h3>
-                <p className="mt-3 max-w-[320px] text-[15px] leading-[1.7] text-white/60">{step.body}</p>
-              </div>
-            ))}
+      <section id="faqs" className="bg-bg px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto grid max-w-[1080px] gap-10 md:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <h2 className="text-[56px] leading-none tracking-[-0.035em] md:text-[96px]">FAQs</h2>
+            <p className="mt-6 max-w-sm text-[21px] leading-[1.45] text-[#363636]">
+              The practical questions before you trust a prompt workflow with production.
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* FAQs */}
-      <section id="faqs" className="px-6 py-20 md:px-10 md:py-28">
-        <div className="mx-auto w-full max-w-[800px]">
-          <h2 className="text-[42px] font-extrabold tracking-[-0.03em] text-ink">FAQs</h2>
-          <div className="mt-8 border-t border-line">
-            {faqs.map((faq, index) => {
+          <div className="border-t border-line">
+            {faqItems.map((faq, index) => {
               const isOpen = openFaq === index;
 
               return (
@@ -291,26 +253,26 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="flex w-full items-center justify-between gap-4 py-6 text-left"
+                    className="group flex w-full items-center justify-between gap-6 py-6 text-left"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-[17px] font-semibold text-ink">
-                      {faq.question}
-                    </span>
+                    <span className="text-[23px] leading-[1.2] md:text-[28px]">{faq.question}</span>
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[18px] font-bold text-ink transition-transform ${
-                        isOpen ? "rotate-45" : ""
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-[24px] transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-white ${
+                        isOpen ? "rotate-45 border-accent bg-accent text-white" : ""
                       }`}
                     >
                       +
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      isOpen ? "max-h-40 pb-6" : "max-h-0"
+                    className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                      isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                     }`}
                   >
-                    <p className="pr-8 text-[15px] leading-[1.7] text-muted">{faq.answer}</p>
+                    <div className="overflow-hidden">
+                      <p className="pb-6 pr-12 text-[19px] leading-[1.55] text-[#706e6e]">{faq.answer}</p>
+                    </div>
                   </div>
                 </div>
               );
@@ -319,41 +281,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA section - Blue like ZFellows */}
-      <section className="bg-accent px-6 py-20 md:px-10 md:py-28">
-        <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center text-center">
-          <h2 className="max-w-[700px] text-[48px] font-black leading-[1.1] tracking-[-0.03em] text-white md:text-[56px]">
-            When in doubt, ship it.
+      <section className="bg-accent px-5 py-20 text-white md:px-8 md:py-28">
+        <div className="mx-auto flex max-w-[980px] flex-col items-center text-center">
+          <h2 className="text-[56px] leading-[0.95] tracking-[-0.04em] md:text-[104px]">
+            When in doubt, version it.
           </h2>
-          <p className="mt-6 max-w-[520px] text-[18px] leading-[1.6] font-medium text-white/80">
-            Start versioning prompts with confidence, branching, evals, and deploys.
-          </p>
-          <Link
-            href="/dashboard"
-            className="mt-8 inline-flex rounded-pill bg-white px-[28px] py-3.5 text-[15px] font-bold text-ink shadow-card transition-all hover:shadow-elevated hover:scale-[1.02]"
-          >
-            Get started →
+          <p className="mt-6 text-[24px] leading-[1.35] text-white/85 md:text-[32px]">We&apos;re all iterating.</p>
+          <Link href="/dashboard" className="zf-button is-secondary mt-9 text-[18px]">
+            Open Pupitar
           </Link>
         </div>
       </section>
 
-      {/* Footer - Dark like Root Fifteen nav */}
-      <footer className="bg-nav px-6 py-8 md:px-10">
-        <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <span className="text-[16px] font-extrabold uppercase tracking-[-0.02em] text-white">Pupitar</span>
-          <div className="flex flex-col items-start gap-3 md:items-end">
-            <div className="flex flex-wrap items-center gap-6 text-[14px] font-medium text-white/50">
-              <a href="#features" className="transition-colors hover:text-white">
-                Features
-              </a>
-              <a href="#how-it-works" className="transition-colors hover:text-white">
-                How it works
-              </a>
-              <a href="#faqs" className="transition-colors hover:text-white">
-                FAQs
-              </a>
-            </div>
-            <p className="text-[12px] text-white/40">Built by Suprith</p>
+      <footer className="border-t border-line bg-white px-5 py-8 md:px-8">
+        <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-[18px] text-[#363636] md:flex-row md:items-center md:justify-between">
+          <Link href="/" className="font-bold text-accent">
+            Pupitar
+          </Link>
+          <div className="flex flex-wrap gap-6">
+            <a className="zf-link" href="#about">
+              About
+            </a>
+            <a className="zf-link" href="#program">
+              Program
+            </a>
+            <a className="zf-link" href="#faqs">
+              FAQs
+            </a>
           </div>
         </div>
       </footer>
