@@ -109,16 +109,17 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-bg text-ink">
       <header
-        className={`sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md transition-shadow duration-300 ${
+        className={`sticky top-0 z-40 bg-bg/95 backdrop-blur-md transition-shadow duration-300 ${
           isScrolled ? "shadow-zf" : ""
         }`}
       >
-        <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-5 px-5 py-4 md:px-8">
-          <Link href="/" className="text-[22px] font-bold tracking-[-0.02em] text-accent">
+        <div className="h-[5px] bg-[#2b3544]" />
+        <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-5 px-5 py-8 md:px-8">
+          <Link href="/" className="font-heading text-[30px] font-bold tracking-[-0.02em] text-accent">
             Pupitar
           </Link>
 
-          <nav className="hidden items-center gap-8 text-[17px] text-[#363636] md:flex">
+          <nav className="hidden items-center gap-8 font-heading text-[15px] font-medium text-[#1a1a1a] md:flex">
             <a className="zf-link" href="#about">
               About
             </a>
@@ -130,7 +131,7 @@ export default function Home() {
             </a>
           </nav>
 
-          <Link href="/dashboard" className="zf-button text-[16px]">
+          <Link href="/dashboard" className="zf-button font-heading text-[15px] font-bold">
             Open Pupitar
           </Link>
         </div>
@@ -138,7 +139,7 @@ export default function Home() {
 
       <section className="px-5 pb-14 pt-16 md:px-8 md:pb-20 md:pt-24">
         <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center text-center">
-          <p className="zf-reveal text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
+          <p className="zf-reveal font-heading text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
             1 prompt. Every version.
           </p>
           <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[0.92] tracking-[-0.04em] md:text-[104px]">
