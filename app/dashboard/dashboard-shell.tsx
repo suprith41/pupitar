@@ -22,12 +22,12 @@ export default function DashboardShell({ repos, canCreateRepos, initialErrorMess
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+    <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
       <section className="mx-auto flex w-full max-w-[960px] flex-col">
         <DashboardTopBar onNewRepo={() => setIsModalOpen(true)} canCreateRepos={canCreateRepos} />
 
         <div className="border-t border-line pt-8">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Your repos</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Your repos</p>
           {repos.length === 0 ? (
             <EmptyState
               onNewRepo={() => setIsModalOpen(true)}
@@ -57,8 +57,8 @@ function DashboardTopBar({
   canCreateRepos: boolean;
 }) {
   return (
-    <header className="flex items-center justify-between pb-4 pt-1 text-[13px] uppercase tracking-[0.18em] text-muted">
-      <Link href="/dashboard" className="font-heading text-[18px] text-ink">
+    <header className="flex items-center justify-between pb-4 pt-1">
+      <Link href="/dashboard" className="text-[18px] font-extrabold uppercase tracking-[-0.02em] text-ink">
         PUPITAR
       </Link>
 
@@ -67,7 +67,7 @@ function DashboardTopBar({
           type="button"
           onClick={onNewRepo}
           disabled={!canCreateRepos}
-          className="text-[#4F46E5] transition-colors hover:text-[#3730A3] disabled:cursor-not-allowed disabled:text-muted"
+          className="rounded-pill bg-accent px-4 py-2 text-[13px] font-bold text-white shadow-blue transition-all hover:bg-accent-hover hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
           + New repo
         </button>
@@ -87,10 +87,10 @@ function EmptyState({
 }) {
   return (
     <div className="flex min-h-[420px] flex-col justify-center gap-4 py-12">
-      <p className="text-lg font-medium tracking-[-0.03em] text-ink">
+      <p className="text-lg font-bold tracking-[-0.03em] text-ink">
         {canCreateRepos ? "Create your first repo." : "Connect Supabase to enable repos."}
       </p>
-      {errorMessage ? <p className="max-w-xl text-sm leading-7 text-[#DC2626]">{errorMessage}</p> : null}
+      {errorMessage ? <p className="max-w-xl text-sm leading-7 text-error">{errorMessage}</p> : null}
       {!canCreateRepos ? (
         <p className="max-w-xl text-sm leading-7 text-muted">
           Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your frontend env, then restart the dev server.
@@ -100,7 +100,7 @@ function EmptyState({
         type="button"
         onClick={onNewRepo}
         disabled={!canCreateRepos}
-        className="w-fit text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
+        className="w-fit text-sm font-semibold text-accent transition-colors hover:text-accent-hover disabled:cursor-not-allowed disabled:text-muted"
       >
         New repo →
       </button>
@@ -110,21 +110,21 @@ function EmptyState({
 
 function RepoGrid({ repos }: { repos: Repo[] }) {
   return (
-    <div className="mt-8 grid gap-0 md:grid-cols-2">
+    <div className="mt-8 grid gap-4 md:grid-cols-2">
       {repos.map((repo) => (
         <Link
           key={repo.id}
           href={`/dashboard/${repo.id}`}
-          className="flex min-h-32 flex-col justify-between border-b border-line py-5 transition-colors hover:bg-panel md:border-r md:px-6 first:md:pl-0 last:md:border-r-0"
+          className="flex min-h-32 flex-col justify-between rounded-xl border-2 border-line bg-surface p-6 shadow-card transition-all hover:border-accent/30 hover:shadow-elevated"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="break-words text-lg font-medium tracking-[-0.03em] text-ink">
+              <h2 className="break-words text-lg font-bold tracking-[-0.03em] text-ink">
                 {repo.name}
               </h2>
               <p className="mt-2 text-sm leading-7 text-muted">{repo.description || "No description"}</p>
             </div>
-            <span className="shrink-0 text-[10px] uppercase tracking-[0.15em] text-muted">
+            <span className="shrink-0 rounded-pill border border-line bg-panel px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted">
               {repo.is_public ? "Public" : "Private"}
             </span>
           </div>
@@ -217,61 +217,63 @@ function NewRepoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-white/90 px-6 py-8">
-      <section className="w-full max-w-md border border-line bg-white p-6">
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-nav/80 px-6 py-8 backdrop-blur-sm">
+      <section className="w-full max-w-md rounded-xl border-2 border-line bg-surface p-6 shadow-elevated">
         <div className="mb-8 flex items-center justify-between border-b border-line pb-4">
-          <h2 className="font-heading text-[24px] text-ink">New repo</h2>
-          <button type="button" onClick={resetAndClose} className="text-sm text-muted transition-colors hover:text-ink">
+          <h2 className="text-[22px] font-extrabold tracking-[-0.03em] text-ink">New repo</h2>
+          <button type="button" onClick={resetAndClose} className="text-sm font-medium text-muted transition-colors hover:text-ink">
             Close
           </button>
         </div>
 
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Name</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Name</span>
             <input
               required
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition-colors focus:border-[#4F46E5]"
+              className="rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
               placeholder="my-prompt-repo"
             />
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Description</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Description</span>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="min-h-28 resize-none border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition-colors focus:border-[#4F46E5]"
+              className="min-h-28 resize-none rounded-md border-2 border-line bg-surface px-3 py-3 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,92,255,0.15)]"
             />
           </label>
 
-          <div className="flex items-center justify-between border border-line px-3 py-3">
+          <div className="flex items-center justify-between rounded-md border-2 border-line px-4 py-3">
             <div>
-              <p className="text-sm text-ink">{isPublic ? "Public" : "Private"}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.15em] text-muted">Visibility</p>
+              <p className="text-sm font-semibold text-ink">{isPublic ? "Public" : "Private"}</p>
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Visibility</p>
             </div>
             <button
               type="button"
               onClick={() => setIsPublic((value) => !value)}
-              className="relative h-7 w-12 border border-line bg-white transition-colors hover:border-[#4F46E5]"
+              className={`relative h-7 w-12 rounded-pill transition-colors ${
+                isPublic ? "bg-accent" : "bg-line"
+              }`}
               aria-pressed={isPublic}
             >
               <span
-                className={`absolute top-1 h-5 w-5 bg-[#4F46E5] transition-transform ${
+                className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-subtle transition-transform ${
                   isPublic ? "translate-x-5" : "translate-x-1"
                 }`}
               />
             </button>
           </div>
 
-          {error ? <p className="text-sm leading-7 text-[#DC2626]">{error}</p> : null}
+          {error ? <p className="text-sm leading-7 text-error">{error}</p> : null}
 
           <button
             type="submit"
             disabled={isSubmitting || !canCreateRepos}
-            className="w-fit border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[#4F46E5] hover:text-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-fit rounded-pill bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-blue transition-all hover:bg-accent-hover hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
           >
             {isSubmitting ? "Creating..." : canCreateRepos ? "Create repo →" : "Configure Supabase"}
           </button>

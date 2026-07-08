@@ -2,20 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { DM_Sans, Source_Serif_4 } from "next/font/google";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap"
-});
-
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["300", "400"],
-  style: ["normal", "italic"],
-  display: "swap"
-});
 
 const badges = [
   "Branching",
@@ -106,24 +92,16 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={`${sourceSerif.className} min-h-screen bg-white text-[#111111]`}>
+    <main className="min-h-screen bg-bg text-ink">
       <style>{`
         @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
 
         @keyframes scroll-right {
-          0% {
-            transform: translateX(-50%);
-          }
-          100% {
-            transform: translateX(0);
-          }
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
         }
 
         .marquee-left {
@@ -134,71 +112,90 @@ export default function Home() {
           animation: scroll-right 25s linear infinite;
         }
 
-        ::selection {
-          background: #111111;
-          color: #ffffff;
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up {
+          animation: fade-up 0.7s ease-out both;
+        }
+
+        .animate-fade-up-delay-1 {
+          animation: fade-up 0.7s ease-out 0.15s both;
+        }
+
+        .animate-fade-up-delay-2 {
+          animation: fade-up 0.7s ease-out 0.3s both;
         }
       `}</style>
 
+      {/* Navigation - Dark nav inspired by Root Fifteen */}
       <header
-        className={`sticky top-0 z-30 w-full bg-white transition-shadow ${
-          isScrolled ? "shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : ""
+        className={`sticky top-0 z-30 w-full bg-nav transition-shadow ${
+          isScrolled ? "shadow-elevated" : ""
         }`}
       >
-        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-6 md:px-10">
-          <Link href="/" className={`${dmSans.className} text-[16px] font-bold text-[#111111]`}>
+        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-4 md:px-10">
+          <Link href="/" className="text-[18px] font-extrabold tracking-[-0.04em] text-white uppercase">
             Pupitar
           </Link>
 
           <nav className="flex items-center gap-8">
-            <a href="#features" className="text-[14px] text-[#111111] transition-colors hover:text-[#555555]">
+            <a href="#features" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
               Features
             </a>
-            <a href="#how-it-works" className="text-[14px] text-[#111111] transition-colors hover:text-[#555555]">
+            <a href="#how-it-works" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
               How it works
             </a>
-            <a href="#faqs" className="text-[14px] text-[#111111] transition-colors hover:text-[#555555]">
+            <a href="#faqs" className="text-[14px] font-medium text-white/70 transition-colors hover:text-white">
               FAQs
             </a>
           </nav>
 
           <Link
             href="/dashboard"
-            className={`${dmSans.className} rounded-[6px] bg-[#111111] px-[18px] py-2 text-[14px] font-bold text-white transition-opacity hover:opacity-90`}
+            className="rounded-pill bg-accent px-[22px] py-2.5 text-[14px] font-bold text-white shadow-blue transition-all hover:bg-accent-hover hover:shadow-lg"
           >
             Get started →
           </Link>
         </div>
       </header>
 
-      <section className="px-6 pb-20 pt-20 md:px-10 md:pb-24 md:pt-24">
+      {/* Hero - Blue section inspired by ZFellows + Root Fifteen */}
+      <section className="bg-accent px-6 pb-20 pt-20 md:px-10 md:pb-28 md:pt-28">
         <div className="mx-auto w-full max-w-[1100px]">
-          <p className="text-[14px] italic font-light text-[#555555]">Write once. Ship with confidence.</p>
-          <h1 className={`${dmSans.className} mt-4 max-w-[700px] text-[72px] font-bold leading-[1.05] tracking-[-0.02em] text-[#111111]`}>
+          <div className="animate-fade-up">
+            <span className="inline-flex items-center rounded-pill border border-white/30 bg-white/10 px-4 py-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm">
+              Version Control for Prompts
+            </span>
+          </div>
+          <h1 className="animate-fade-up-delay-1 mt-6 max-w-[700px] text-[64px] font-black leading-[1.05] tracking-[-0.04em] text-white md:text-[80px]">
             The GitHub
             <br />
             for AI Prompts.
           </h1>
-          <p className="mt-5 max-w-[480px] text-[18px] leading-[1.6] text-[#555555]">
+          <p className="animate-fade-up-delay-2 mt-6 max-w-[500px] text-[18px] leading-[1.6] font-medium text-white/80">
             Version control, branching, and eval-gated deploys for prompts and AI agents.
           </p>
           <Link
             href="/dashboard"
-            className={`${dmSans.className} mt-8 inline-flex rounded-[6px] bg-[#111111] px-[28px] py-3 text-[15px] font-bold text-white transition-opacity hover:opacity-90`}
+            className="animate-fade-up-delay-2 mt-8 inline-flex rounded-pill bg-white px-[28px] py-3.5 text-[15px] font-bold text-ink shadow-card transition-all hover:shadow-elevated hover:scale-[1.02]"
           >
             Get started →
           </Link>
         </div>
       </section>
 
-      <section className="overflow-hidden border-y border-[#E5E7EB] bg-white py-4">
+      {/* Marquee badges */}
+      <section className="overflow-hidden border-b border-line bg-bg py-5">
         <div className="flex flex-col gap-3">
           <div className="overflow-hidden">
             <div className="marquee-left flex w-max items-center">
               {[...badges, ...badges].map((badge, index) => (
                 <span
                   key={`left-${badge}-${index}`}
-                  className="mr-3 whitespace-nowrap rounded-full border border-[#E5E7EB] bg-white px-5 py-2 text-[13px] text-[#111111]"
+                  className="mr-3 whitespace-nowrap rounded-pill border border-line bg-surface px-5 py-2 text-[13px] font-medium text-ink shadow-subtle"
                 >
                   {badge}
                 </span>
@@ -210,7 +207,7 @@ export default function Home() {
               {[...badges, ...badges].map((badge, index) => (
                 <span
                   key={`right-${badge}-${index}`}
-                  className="mr-3 whitespace-nowrap rounded-full border border-[#E5E7EB] bg-white px-5 py-2 text-[13px] text-[#111111]"
+                  className="mr-3 whitespace-nowrap rounded-pill border border-line bg-surface px-5 py-2 text-[13px] font-medium text-ink shadow-subtle"
                 >
                   {badge}
                 </span>
@@ -220,85 +217,101 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-20 md:px-10 md:py-24">
+      {/* Pattern section - inspired by ZFellows text section */}
+      <section className="px-6 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-[900px]">
-          <h2 className={`${dmSans.className} text-[42px] font-bold leading-[1.1] text-[#111111]`}>
+          <h2 className="text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-ink md:text-[52px]">
             There&apos;s a pattern among the best AI builders.
           </h2>
-          <p className="mt-5 max-w-[600px] text-[18px] leading-[1.6] text-[#555555]">
+          <p className="mt-6 max-w-[600px] text-[18px] leading-[1.7] text-muted">
             They all version-controlled their prompts. They tested before deploying. They treated prompts like code.
           </p>
-          <p className={`${sourceSerif.className} mt-8 max-w-[760px] text-[32px] italic font-light leading-[1.3] text-[#111111]`}>
-            “Success leaves clues - follow them.”
+          <p className="mt-8 max-w-[760px] text-[28px] italic font-light leading-[1.4] text-ink/70 md:text-[32px]" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
+            &ldquo;Success leaves clues — follow them.&rdquo;
           </p>
         </div>
       </section>
 
-      <section id="features" className="px-6 pb-20 md:px-10 md:pb-24">
-        <div className="mx-auto grid w-full max-w-[1100px] border-y border-[#E5E7EB] md:grid-cols-3">
-          {features.map((feature, index) => (
-            <div
-              key={feature.label}
-              className={`px-0 py-8 md:px-10 ${index > 0 ? "md:border-l md:border-[#E5E7EB]" : ""}`}
-            >
-              <p className="mb-3 text-[11px] uppercase tracking-[0.12em] text-[#555555]">{feature.label}</p>
-              <h3 className={`${dmSans.className} mb-3 text-[24px] font-bold text-[#111111]`}>
-                {feature.heading}
-              </h3>
-              <p className="text-[16px] leading-[1.7] text-[#555555]">{feature.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="how-it-works" className="bg-[#F9FAFB] px-6 py-20 md:px-10 md:py-24">
-        <div className="mx-auto w-full max-w-[1000px]">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-[#555555]">How it works</p>
-          <h2 className={`${dmSans.className} mt-4 max-w-[720px] text-[48px] font-bold leading-[1.1] text-[#111111]`}>
-            From idea to production in minutes.
-          </h2>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-            {steps.map((step) => (
-              <div key={step.number} className="relative border-t border-[#E5E7EB] pt-8">
-                <div className={`${dmSans.className} text-[64px] font-bold leading-none text-[#E5E7EB]`}>
-                  {step.number}
-                </div>
-                <h3 className={`${dmSans.className} mt-3 text-[20px] font-bold text-[#111111]`}>
-                  {step.heading}
+      {/* Features - Card style inspired by Root Fifteen */}
+      <section id="features" className="px-6 pb-20 md:px-10 md:pb-28">
+        <div className="mx-auto w-full max-w-[1100px]">
+          <div className="grid gap-6 md:grid-cols-3">
+            {features.map((feature) => (
+              <div
+                key={feature.label}
+                className="rounded-xl border-2 border-ink/10 bg-surface p-8 shadow-card transition-all hover:border-accent/30 hover:shadow-elevated"
+              >
+                <span className="inline-flex rounded-pill bg-nav px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+                  {feature.label}
+                </span>
+                <h3 className="mt-5 text-[22px] font-extrabold leading-[1.2] tracking-[-0.02em] text-ink">
+                  {feature.heading}
                 </h3>
-                <p className="mt-3 max-w-[320px] text-[15px] leading-[1.7] text-[#555555]">{step.body}</p>
+                <p className="mt-3 text-[15px] leading-[1.7] text-muted">{feature.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="faqs" className="px-6 py-20 md:px-10 md:py-24">
+      {/* How it works */}
+      <section id="how-it-works" className="bg-nav px-6 py-20 md:px-10 md:py-28">
+        <div className="mx-auto w-full max-w-[1000px]">
+          <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">How it works</span>
+          <h2 className="mt-4 max-w-[720px] text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-white md:text-[52px]">
+            From idea to production in minutes.
+          </h2>
+
+          <div className="mt-14 grid gap-8 md:grid-cols-2">
+            {steps.map((step) => (
+              <div key={step.number} className="relative border-t border-white/15 pt-8">
+                <div className="text-[64px] font-black leading-none text-white/10">
+                  {step.number}
+                </div>
+                <h3 className="mt-3 text-[20px] font-bold text-white">
+                  {step.heading}
+                </h3>
+                <p className="mt-3 max-w-[320px] text-[15px] leading-[1.7] text-white/60">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs */}
+      <section id="faqs" className="px-6 py-20 md:px-10 md:py-28">
         <div className="mx-auto w-full max-w-[800px]">
-          <h2 className={`${dmSans.className} text-[42px] font-bold text-[#111111]`}>FAQs</h2>
-          <div className="mt-8 border-t border-[#E5E7EB]">
+          <h2 className="text-[42px] font-extrabold tracking-[-0.03em] text-ink">FAQs</h2>
+          <div className="mt-8 border-t border-line">
             {faqs.map((faq, index) => {
               const isOpen = openFaq === index;
 
               return (
-                <div key={faq.question} className="border-b border-[#E5E7EB]">
+                <div key={faq.question} className="border-b border-line">
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="flex w-full items-center justify-between gap-4 py-5 text-left"
+                    className="flex w-full items-center justify-between gap-4 py-6 text-left"
                     aria-expanded={isOpen}
                   >
-                    <span className={`${dmSans.className} text-[17px] font-medium text-[#111111]`}>
+                    <span className="text-[17px] font-semibold text-ink">
                       {faq.question}
                     </span>
-                    <span className={`${dmSans.className} text-[24px] font-bold text-[#111111]`}>
-                      {isOpen ? "−" : "+"}
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[18px] font-bold text-ink transition-transform ${
+                        isOpen ? "rotate-45" : ""
+                      }`}
+                    >
+                      +
                     </span>
                   </button>
-                  {isOpen ? (
-                    <p className="pb-5 pr-8 text-[15px] leading-[1.7] text-[#555555]">{faq.answer}</p>
-                  ) : null}
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      isOpen ? "max-h-40 pb-6" : "max-h-0"
+                    }`}
+                  >
+                    <p className="pr-8 text-[15px] leading-[1.7] text-muted">{faq.answer}</p>
+                  </div>
                 </div>
               );
             })}
@@ -306,39 +319,41 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white px-6 py-20 md:px-10 md:py-24">
+      {/* CTA section - Blue like ZFellows */}
+      <section className="bg-accent px-6 py-20 md:px-10 md:py-28">
         <div className="mx-auto flex w-full max-w-[1000px] flex-col items-center text-center">
-          <h2 className={`${dmSans.className} max-w-[700px] text-[52px] font-bold leading-[1.1] text-[#111111]`}>
+          <h2 className="max-w-[700px] text-[48px] font-black leading-[1.1] tracking-[-0.03em] text-white md:text-[56px]">
             When in doubt, ship it.
           </h2>
-          <p className="mt-5 max-w-[520px] text-[18px] leading-[1.6] text-[#555555]">
+          <p className="mt-6 max-w-[520px] text-[18px] leading-[1.6] font-medium text-white/80">
             Start versioning prompts with confidence, branching, evals, and deploys.
           </p>
           <Link
             href="/dashboard"
-            className={`${dmSans.className} mt-8 inline-flex rounded-[6px] bg-[#111111] px-[28px] py-3 text-[15px] font-bold text-white transition-opacity hover:opacity-90`}
+            className="mt-8 inline-flex rounded-pill bg-white px-[28px] py-3.5 text-[15px] font-bold text-ink shadow-card transition-all hover:shadow-elevated hover:scale-[1.02]"
           >
             Get started →
           </Link>
         </div>
       </section>
 
-      <footer className="border-t border-[#E5E7EB] bg-white px-6 py-8 md:px-10">
+      {/* Footer - Dark like Root Fifteen nav */}
+      <footer className="bg-nav px-6 py-8 md:px-10">
         <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <span className={`${dmSans.className} text-[16px] font-bold text-[#111111]`}>Pupitar</span>
+          <span className="text-[16px] font-extrabold uppercase tracking-[-0.02em] text-white">Pupitar</span>
           <div className="flex flex-col items-start gap-3 md:items-end">
-            <div className="flex flex-wrap items-center gap-6 text-[14px] text-[#555555]">
-              <a href="#features" className="transition-colors hover:text-[#111111]">
+            <div className="flex flex-wrap items-center gap-6 text-[14px] font-medium text-white/50">
+              <a href="#features" className="transition-colors hover:text-white">
                 Features
               </a>
-              <a href="#how-it-works" className="transition-colors hover:text-[#111111]">
+              <a href="#how-it-works" className="transition-colors hover:text-white">
                 How it works
               </a>
-              <a href="#faqs" className="transition-colors hover:text-[#111111]">
+              <a href="#faqs" className="transition-colors hover:text-white">
                 FAQs
               </a>
             </div>
-            <p className="text-[12px] text-[#555555]">Built by Suprith</p>
+            <p className="text-[12px] text-white/40">Built by Suprith</p>
           </div>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,18 @@
 
 :root {
   color-scheme: light;
-  background: #ffffff;
+  --color-bg: #F5F0E8;
+  --color-surface: #FFFFFF;
+  --color-nav: #0D1117;
+  --color-ink: #111111;
+  --color-muted: #6B7280;
+  --color-line: #D6D0C4;
+  --color-accent: #3B5CFF;
+  --color-accent-hover: #2A47E0;
+  --color-panel: #EDE9E0;
+  --color-error: #DC2626;
+  --color-success: #16A34A;
+  background: var(--color-bg);
 }
 
 * {
@@ -15,23 +26,26 @@
 
 html {
   min-height: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: #ffffff;
-  color: #111111;
-  font-family: "Source Serif 4", Georgia, serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: #ffffff;
 }
 
 ::placeholder {
-  color: #6b7280;
+  color: var(--color-muted);
   opacity: 1;
 }
 
@@ -48,8 +62,12 @@ select {
 }
 
 button {
-  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease,
-    opacity 150ms ease, transform 150ms ease;
+  transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease,
+    opacity 200ms ease, transform 150ms ease, box-shadow 200ms ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 h1,
@@ -58,8 +76,9 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Fredericka the Great", Georgia, serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.03em;
+  font-weight: 800;
 }
 
 label,
@@ -71,9 +90,37 @@ p,
 a,
 li,
 span {
-  font-family: "Source Serif 4", Georgia, serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 ::marker {
-  color: #6b7280;
+  color: var(--color-muted);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Custom focus ring */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(59, 92, 255, 0.15);
 }

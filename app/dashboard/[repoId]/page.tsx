@@ -7,7 +7,7 @@ import RepoEditorShell from "./repo-editor-shell";
 export default async function RepoPage({ params }: { params: { repoId: string } }) {
   if (!hasSupabaseConfig()) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+      <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
           <RepoPageHeader repoName="PUPITAR" />
           <div className="border-t border-line py-10">
@@ -62,7 +62,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (versionsError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+      <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
           <RepoPageHeader repoName="PUPITAR" />
           <div className="border-t border-line py-10">
@@ -76,7 +76,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (branchesError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+      <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
           <RepoPageHeader repoName="Pupitar" />
           <div className="border-t border-line py-10">
@@ -90,7 +90,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
   if (evalCasesError) {
     return (
-      <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+      <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[900px] flex-col">
           <RepoPageHeader repoName={repo.name} />
           <div className="border-t border-line py-10">
@@ -103,7 +103,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   }
 
   return (
-    <main className="min-h-screen bg-surface px-6 py-6 text-ink md:px-10 md:py-8">
+    <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
       <section className="mx-auto flex w-full max-w-[960px] flex-col">
         <RepoEditorShell
           repo={repo}
@@ -119,15 +119,15 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
 
 function RepoPageHeader({ repoName }: { repoName: string }) {
   return (
-    <header className="flex items-center justify-between border-b border-line pb-4 pt-1 text-[13px] uppercase tracking-[0.18em] text-muted">
+    <header className="flex items-center justify-between border-b border-line pb-4 pt-1 text-[13px] font-bold uppercase tracking-[0.18em] text-muted">
       <div className="flex min-w-0 items-center gap-2">
-        <Link href="/dashboard" className="shrink-0">
+        <Link href="/dashboard" className="shrink-0 tracking-[-0.02em] text-ink">
           PUPITAR
         </Link>
-        <span>/</span>
-        <span>suprith</span>
-        <span>/</span>
-        <span className="shrink-0 text-ink">{repoName}</span>
+        <span className="text-line">/</span>
+        <span className="font-medium">suprith</span>
+        <span className="text-line">/</span>
+        <span className="shrink-0 font-bold text-ink">{repoName}</span>
       </div>
     </header>
   );
