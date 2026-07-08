@@ -115,18 +115,18 @@ export default function Home() {
       >
         <div className="h-[5px] bg-[#2b3544]" />
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-5 px-5 py-8 md:px-8">
-          <Link href="/" className="font-heading text-[30px] font-bold tracking-[-0.02em] text-accent">
+          <Link href="/" className="font-heading text-[30px] font-bold tracking-[-0.02em] text-accent -ml-2 md:-ml-4">
             Pupitar
           </Link>
 
-          <nav className="hidden items-center gap-8 font-heading text-[15px] font-medium text-[#1a1a1a] md:flex">
-            <a className="zf-link" href="#about">
+          <nav className="hidden items-center gap-8 font-heading text-[15px] font-bold text-[#1a1a1a] md:flex">
+            <a className="zf-link transition-colors hover:text-accent" href="#about">
               About
             </a>
-            <a className="zf-link" href="#program">
+            <a className="zf-link transition-colors hover:text-accent" href="#program">
               Program
             </a>
-            <a className="zf-link" href="#faqs">
+            <a className="zf-link transition-colors hover:text-accent" href="#faqs">
               FAQs
             </a>
           </nav>
