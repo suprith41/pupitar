@@ -6,7 +6,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const nextUrl = new URL("/dashboard", request.url);
+  const nextUrl = new URL("/api/post-auth", request.url);
   let response = NextResponse.redirect(nextUrl);
 
   if (!code) {

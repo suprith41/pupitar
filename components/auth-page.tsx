@@ -284,7 +284,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
           return;
         }
 
-        window.location.assign("/dashboard");
+        window.location.assign("/api/post-auth");
         return;
       }
 
