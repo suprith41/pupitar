@@ -117,7 +117,7 @@ export default function Home() {
         <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-6 md:px-8 md:py-8">
           <Link
             href="/"
-            className="justify-self-center text-[24px] font-bold leading-none tracking-[-0.02em] text-ink md:justify-self-start"
+            className="justify-self-center text-[30px] font-bold leading-none tracking-[-0.02em] text-accent md:justify-self-start"
             style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
           >
             Pupitar
@@ -141,7 +141,7 @@ export default function Home() {
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center rounded-[6px] bg-[#111111] px-4 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-[#222222]"
+              className="inline-flex items-center justify-center rounded-[6px] bg-accent px-4 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-accent-hover"
             >
               Get started →
             </Link>
