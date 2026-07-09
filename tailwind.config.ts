@@ -18,7 +18,8 @@ const config: Config = {
         success: "#1D7F4D"
       },
       fontFamily: {
-        sans: ["Source Serif 4", "Georgia", "serif"],
+        sans: ["DM Sans", "Arial", "sans-serif"],
+        serif: ["Source Serif 4", "Georgia", "serif"],
         heading: ["DM Sans", "Arial", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"]
       },
