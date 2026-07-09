@@ -1,7 +1,9 @@
 "use client";
 
+import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getSupabaseAnonKey, getSupabaseUrl, hasSupabaseConfig } from "@/lib/supabase/env";
 
 const heroTiles = [
   { title: "prompt.md", meta: "main", tone: "bg-accent text-white" },
@@ -92,9 +94,16 @@ function ProductTile({
   );
 }
 
+function getEmailInitial(email: string | null) {
+  const initial = email?.trim().charAt(0) ?? "";
+  return initial ? initial.toUpperCase() : "U";
+}
+
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [hasCheckedSession, setHasCheckedSession] = useState(false);
 
   useEffect(() => {
     function onScroll() {
@@ -104,6 +113,37 @@ export default function Home() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig()) {
+      setHasCheckedSession(true);
+      return;
+    }
+
+    const supabase = createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey());
+    let isActive = true;
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isActive) {
+        return;
+      }
+
+      setSessionEmail(session?.user.email ?? null);
+      setHasCheckedSession(true);
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionEmail(session?.user.email ?? null);
+      setHasCheckedSession(true);
+    });
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -124,27 +164,51 @@ export default function Home() {
           </Link>
 
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-heading text-[15px] font-medium text-[#111111] md:justify-center">
-            <a className="transition-colors hover:opacity-70" href="#about">
+            <a className="transition-colors hover:text-accent" href="#about">
               About
             </a>
-            <a className="transition-colors hover:opacity-70" href="#program">
+            <a className="transition-colors hover:text-accent" href="#program">
               How it works
             </a>
-            <a className="transition-colors hover:opacity-70" href="#faqs">
+            <a className="transition-colors hover:text-accent" href="#faqs">
               FAQs
             </a>
           </nav>
 
           <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
-            <Link href="/login" className="font-heading text-[15px] font-medium text-[#111111] hover:opacity-70">
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-[6px] bg-accent px-4 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-accent-hover"
-            >
-              Get started →
-            </Link>
+            {hasCheckedSession && sessionEmail ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
+                >
+                  Dashboard →
+                </Link>
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111111] text-[13px] font-bold text-white"
+                  aria-label={sessionEmail}
+                  title={sessionEmail}
+                  style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+                >
+                  {getEmailInitial(sessionEmail)}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-accent-hover"
+                >
+                  Get started →
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

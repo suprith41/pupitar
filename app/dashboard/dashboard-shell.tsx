@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -17,6 +17,11 @@ type DashboardShellProps = {
   canCreateRepos: boolean;
   initialErrorMessage?: string;
 };
+
+function getEmailInitial(email: string | null) {
+  const initial = email?.trim().charAt(0) ?? "";
+  return initial ? initial.toUpperCase() : "U";
+}
 
 export default function DashboardShell({ repos, canCreateRepos, initialErrorMessage }: DashboardShellProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,13 +61,63 @@ function DashboardTopBar({
   onNewRepo: () => void;
   canCreateRepos: boolean;
 }) {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let isActive = true;
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isActive) {
+        return;
+      }
+
+      setUserEmail(session?.user.email ?? null);
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user.email ?? null);
+    });
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    function onDocumentClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    if (!isMenuOpen) {
+      return undefined;
+    }
+
+    document.addEventListener("mousedown", onDocumentClick);
+    return () => document.removeEventListener("mousedown", onDocumentClick);
+  }, [isMenuOpen]);
+
+  async function handleSignOut() {
+    setIsMenuOpen(false);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.assign("/");
+  }
+
   return (
     <header className="flex items-center justify-between pb-4 pt-1">
       <Link href="/dashboard" className="text-[18px] font-extrabold uppercase tracking-[-0.02em] text-ink">
         PUPITAR
       </Link>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={onNewRepo}
@@ -71,6 +126,43 @@ function DashboardTopBar({
         >
           + New repo
         </button>
+
+        <div ref={menuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((value) => !value)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111111] text-[13px] font-bold text-white transition-colors hover:bg-[#222222]"
+            aria-label={userEmail ? `Open account menu for ${userEmail}` : "Open account menu"}
+            title={userEmail ?? "Account"}
+            style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+          >
+            {getEmailInitial(userEmail)}
+          </button>
+
+          {isMenuOpen ? (
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-60 rounded-lg border border-line bg-surface p-2 shadow-elevated">
+              <p className="px-3 py-2 text-[13px] leading-5 text-muted break-all">
+                {userEmail ?? "Signed in"}
+              </p>
+
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMenuOpen(false)}
+                className="block rounded-md px-3 py-2 text-[14px] text-ink transition-colors hover:bg-panel"
+              >
+                Settings
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="block w-full rounded-md px-3 py-2 text-left text-[14px] text-[#DC2626] transition-colors hover:bg-panel"
+              >
+                Log out
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </header>
   );
