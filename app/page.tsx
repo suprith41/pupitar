@@ -388,9 +388,15 @@ export default function Home() {
 
       <footer className="border-t border-line bg-white px-5 py-8 md:px-8">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-[18px] text-[#363636] md:flex-row md:items-center md:justify-between">
-          <Link href="/" className="font-bold text-accent">
-            Pupitar
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="font-bold text-accent">
+              Pupitar
+            </Link>
+            <span className="text-sm text-[#706E6E]">|</span>
+            <span className="text-sm text-[#706E6E] font-medium" style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}>
+              Built with 💙 by Suprith
+            </span>
+          </div>
           <div className="flex flex-wrap gap-6">
             <a className="zf-link" href="#about">
               About

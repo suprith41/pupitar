@@ -431,6 +431,18 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
           </Link>
         </p>
       </section>
+
+      {/* Built with 💙 by Suprith */}
+      <p
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[12px] font-medium tracking-wide"
+        style={{
+          fontFamily: '"DM Sans", Arial, sans-serif',
+          color: "rgba(255, 255, 255, 0.6)",
+          margin: 0
+        }}
+      >
+        Built with 💙 by Suprith
+      </p>
     </main>
   );
 }

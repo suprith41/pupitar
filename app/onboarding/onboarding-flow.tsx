@@ -964,6 +964,25 @@ export default function OnboardingFlow() {
         )}
       </div>
 
+      {/* Built with 💙 by Suprith */}
+      <p
+        style={{
+          position: "absolute",
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          fontFamily: T.dmSans,
+          fontSize: 12,
+          fontWeight: 500,
+          color: "rgba(255, 255, 255, 0.6)",
+          zIndex: 2,
+          margin: 0,
+          letterSpacing: "0.025em"
+        }}
+      >
+        Built with 💙 by Suprith
+      </p>
+
       {/* Keyframe for step transitions */}
       <style>{`
         @keyframes onb-fade-in {
