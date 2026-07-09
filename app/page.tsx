@@ -140,16 +140,16 @@ export default function Home() {
       <section className="px-5 pb-14 pt-16 md:px-8 md:pb-20 md:pt-24">
         <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center text-center">
           <p className="zf-reveal font-heading text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
-            1 prompt. Every version.
+            BUILT FOR PROMPT ENGINEERS
           </p>
-          <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[0.92] tracking-[-0.04em] md:text-[104px]">
-            Your Fast-Track Into Reliable AI Prompts.
+          <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[1.02] tracking-[-0.04em] md:text-[104px]">
+            Prompts that ship like code.
           </h1>
           <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
-            Version control, evals, branching, and live deploys for prompts your users depend on.
+            Branch, eval, and deploy AI prompts with full version history and a live API endpoint.
           </p>
           <Link href="/dashboard" className="zf-button zf-reveal mt-8 text-[18px]">
-            Start building
+            Get started →
           </Link>
         </div>
       </section>
