@@ -867,22 +867,30 @@ export default function OnboardingFlow() {
     <main
       style={{
         minHeight: "100vh",
-        background: T.bg,
+        backgroundImage: "url('/auth-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "48px 24px"
+        padding: "48px 24px",
+        position: "relative"
       }}
     >
       <div
         style={{
           width: "100%",
           maxWidth: 520,
-          background: T.surface,
+          background: "rgba(255, 255, 255, 0.72)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
           border: `1px solid ${T.line}`,
           borderRadius: 8,
           padding: "40px 44px",
-          boxSizing: "border-box"
+          boxSizing: "border-box",
+          position: "relative",
+          zIndex: 2,
+          boxShadow: "0 10px 24px rgba(0, 11, 28, 0.08)"
         }}
       >
         {/* Logo */}

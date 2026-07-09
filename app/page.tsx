@@ -148,87 +148,105 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-bg text-ink">
-      <header
-        className={`sticky top-0 z-40 bg-bg/95 backdrop-blur-md transition-shadow duration-300 ${
-          isScrolled ? "shadow-zf" : ""
-        }`}
-      >
-        <div className="h-[5px] bg-[#2b3544]" />
-        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-6 md:px-8 md:py-8">
-          <Link
-            href="/"
-            className="justify-self-center text-[30px] font-bold leading-none tracking-[-0.02em] text-accent md:justify-self-start"
-            style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
-          >
-            Pupitar
-          </Link>
+      <div className="relative min-h-[92vh] flex flex-col justify-between">
+        {/* Background Image Layer with isolated filters */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/background.jpg')",
+            filter: "brightness(1.28) contrast(1.02)"
+          }}
+        />
 
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-heading text-[15px] font-medium text-[#111111] md:justify-center">
-            <a className="transition-colors hover:text-accent" href="#about">
-              About
-            </a>
-            <a className="transition-colors hover:text-accent" href="#program">
-              How it works
-            </a>
-            <a className="transition-colors hover:text-accent" href="#faqs">
-              FAQs
-            </a>
-          </nav>
+        {/* Gradient overlay to ensure text legibility and fade to the solid #FCFBF7 background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "linear-gradient(to bottom, rgba(252, 251, 247, 0.05) 0%, rgba(252, 251, 247, 0.01) 60%, #FCFBF7 100%)"
+          }}
+        />
 
-          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
-            {hasCheckedSession && sessionEmail ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
-                >
-                  Dashboard →
-                </Link>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-white"
-                  aria-label={sessionEmail}
-                  title={sessionEmail}
-                  style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
-                >
-                  {getEmailInitial(sessionEmail)}
-                </div>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-accent-hover"
-                >
-                  Get started →
-                </Link>
-              </>
-            )}
+        <header
+          className={`sticky top-0 z-40 transition-all duration-300 ${isScrolled ? "bg-bg/95 backdrop-blur-md shadow-zf" : "bg-transparent"
+            }`}
+        >
+          <div className="h-[5px] bg-[#2b3544]" />
+          <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-6 md:px-8 md:py-8">
+            <Link
+              href="/"
+              className="justify-self-center text-[30px] font-bold leading-none tracking-[-0.02em] text-accent md:justify-self-start"
+              style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+            >
+              Pupitar
+            </Link>
+
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-heading text-[15px] font-medium text-[#111111] md:justify-center">
+              <a className="transition-colors hover:text-accent" href="#about">
+                About
+              </a>
+              <a className="transition-colors hover:text-accent" href="#program">
+                How it works
+              </a>
+              <a className="transition-colors hover:text-accent" href="#faqs">
+                FAQs
+              </a>
+            </nav>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
+              {hasCheckedSession && sessionEmail ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
+                  >
+                    Dashboard →
+                  </Link>
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-white"
+                    aria-label={sessionEmail}
+                    title={sessionEmail}
+                    style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+                  >
+                    {getEmailInitial(sessionEmail)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-accent-hover"
+                  >
+                    Get started →
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="px-5 pb-14 pt-16 md:px-8 md:pb-20 md:pt-24">
-        <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center text-center">
-          <p className="zf-reveal font-heading text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
-            BUILT FOR PROMPT ENGINEERS
-          </p>
-          <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[1.02] tracking-[-0.04em] md:text-[104px]">
-            Prompts that ship like code.
-          </h1>
-          <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
-            Branch, eval, and deploy AI prompts with full version history and a live API endpoint.
-          </p>
-          <Link href="/dashboard" className="zf-button zf-reveal mt-8 text-[18px]">
-            Get started →
-          </Link>
-        </div>
-      </section>
+        <section className="relative z-10 flex-1 flex items-center justify-center px-5 pb-24 pt-12 md:px-8">
+          <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center text-center">
+            <p className="zf-reveal font-heading text-[22px] font-bold uppercase leading-none text-accent md:text-[28px]">
+              BUILT FOR PROMPT ENGINEERS
+            </p>
+            <h1 className="zf-reveal mt-5 max-w-[920px] text-[58px] leading-[1.02] tracking-[-0.04em] md:text-[104px]">
+              Prompts that ship like code.
+            </h1>
+            <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
+              Branch, eval, and deploy AI prompts with full version history and a live API endpoint.
+            </p>
+            <Link href="/dashboard" className="zf-button zf-reveal mt-8 text-[18px]">
+              Get started →
+            </Link>
+          </div>
+        </section>
+      </div>
 
       <section aria-label="Pupitar product preview" className="px-5 pb-20 md:px-8">
         <div className="mx-auto grid w-full max-w-[1180px] grid-cols-2 gap-3 md:grid-cols-6 md:gap-4">
@@ -335,17 +353,15 @@ export default function Home() {
                   >
                     <span className="text-[23px] leading-[1.2] md:text-[28px]">{faq.question}</span>
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-[24px] transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-white ${
-                        isOpen ? "rotate-45 border-accent bg-accent text-white" : ""
-                      }`}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-[24px] transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-white ${isOpen ? "rotate-45 border-accent bg-accent text-white" : ""
+                        }`}
                     >
                       +
                     </span>
                   </button>
                   <div
-                    className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                      isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                    }`}
+                    className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                      }`}
                   >
                     <div className="overflow-hidden">
                       <p className="pb-6 pr-12 text-[19px] leading-[1.55] text-[#706e6e]">{faq.answer}</p>

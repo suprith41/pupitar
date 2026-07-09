@@ -310,8 +310,22 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   }
 
   return (
-    <main className="min-h-screen bg-white px-6">
-      <section className="mx-auto flex min-h-screen w-full max-w-[400px] flex-col items-stretch pt-20 text-center">
+    <main
+      className="min-h-screen bg-cover bg-center px-6 relative flex items-center justify-center py-12"
+      style={{
+        backgroundImage: "url('/auth-bg.jpg')"
+      }}
+    >
+
+      <section
+        className="relative z-10 w-full max-w-[440px] rounded-lg border border-[#E1E4EA]/60 p-10 text-center shadow-lg"
+        style={{
+          background: "rgba(255, 255, 255, 0.72)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          boxSizing: "border-box"
+        }}
+      >
         <Link
           href="/"
           className="text-[18px] font-bold leading-none text-[#111111]"
