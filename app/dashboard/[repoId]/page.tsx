@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import RepoEditorShell from "./repo-editor-shell";
+import { redirect } from "next/navigation";
 
 export default async function RepoPage({ params }: { params: { repoId: string } }) {
   if (!hasSupabaseConfig()) {
     return (
       <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
-          <RepoPageHeader repoName="PUPITAR" />
+          <RepoPageHeader repoName="PUPITAR" userLabel="account" />
           <div className="border-t border-line py-10">
             <p className="text-lg font-medium tracking-[-0.03em] text-ink">Connect Supabase</p>
             <p className="mt-3 max-w-xl text-sm leading-7 text-muted">
@@ -23,6 +24,14 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   }
 
   const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   const [
     { data: repo, error: repoError },
     { data: versions, error: versionsError },
@@ -31,7 +40,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     { data: deployment }
   ] =
     await Promise.all([
-      supabase.from("repos").select("id, name").eq("id", params.repoId).single(),
+      supabase.from("repos").select("id, name").eq("id", params.repoId).eq("owner_id", user.id).single(),
       supabase
         .from("prompt_versions")
         .select(
@@ -64,7 +73,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     return (
       <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
-          <RepoPageHeader repoName="PUPITAR" />
+          <RepoPageHeader repoName="PUPITAR" userLabel="account" />
           <div className="border-t border-line py-10">
             <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load this repo</p>
             <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{versionsError.message}</p>
@@ -78,7 +87,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     return (
       <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[960px] flex-col">
-          <RepoPageHeader repoName="Pupitar" />
+          <RepoPageHeader repoName="Pupitar" userLabel="account" />
           <div className="border-t border-line py-10">
             <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load branches</p>
             <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{branchesError.message}</p>
@@ -92,7 +101,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     return (
       <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
         <section className="mx-auto flex w-full max-w-[900px] flex-col">
-          <RepoPageHeader repoName={repo.name} />
+          <RepoPageHeader repoName={repo.name} userLabel={user.email?.split("@")[0] ?? "account"} />
           <div className="border-t border-line py-10">
             <p className="text-lg font-medium tracking-[-0.03em] text-ink">Could not load eval cases</p>
             <p className="mt-3 max-w-xl text-sm leading-7 text-muted">{evalCasesError.message}</p>
@@ -117,7 +126,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   );
 }
 
-function RepoPageHeader({ repoName }: { repoName: string }) {
+function RepoPageHeader({ repoName, userLabel }: { repoName: string; userLabel: string }) {
   return (
     <header className="flex items-center justify-between border-b border-line pb-4 pt-1 text-[13px] font-bold uppercase tracking-[0.18em] text-muted">
       <div className="flex min-w-0 items-center gap-2">
@@ -125,7 +134,7 @@ function RepoPageHeader({ repoName }: { repoName: string }) {
           PUPITAR
         </Link>
         <span className="text-line">/</span>
-        <span className="font-medium">suprith</span>
+        <span className="font-medium">{userLabel}</span>
         <span className="text-line">/</span>
         <span className="shrink-0 font-bold text-ink">{repoName}</span>
       </div>

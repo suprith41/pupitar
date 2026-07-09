@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { redirect } from "next/navigation";
 import DashboardShell from "./dashboard-shell";
 
 export default async function DashboardPage() {
@@ -8,10 +9,18 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   const { data: repos, error } = await supabase
     .from("repos")
     .select("id, name, description, is_public, created_at")
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {

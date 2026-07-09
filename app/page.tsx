@@ -114,26 +114,38 @@ export default function Home() {
         }`}
       >
         <div className="h-[5px] bg-[#2b3544]" />
-        <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-5 px-5 py-8 md:px-8">
-          <Link href="/" className="font-heading text-[30px] font-bold tracking-[-0.02em] text-accent -ml-2 md:-ml-4">
+        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-6 md:px-8 md:py-8">
+          <Link
+            href="/"
+            className="justify-self-center text-[24px] font-bold leading-none tracking-[-0.02em] text-ink md:justify-self-start"
+            style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+          >
             Pupitar
           </Link>
 
-          <nav className="hidden items-center gap-8 font-heading text-[15px] font-bold text-[#1a1a1a] md:flex">
-            <a className="zf-link transition-colors hover:text-accent" href="#about">
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-heading text-[15px] font-medium text-[#111111] md:justify-center">
+            <a className="transition-colors hover:opacity-70" href="#about">
               About
             </a>
-            <a className="zf-link transition-colors hover:text-accent" href="#program">
-              Program
+            <a className="transition-colors hover:opacity-70" href="#program">
+              How it works
             </a>
-            <a className="zf-link transition-colors hover:text-accent" href="#faqs">
+            <a className="transition-colors hover:opacity-70" href="#faqs">
               FAQs
             </a>
           </nav>
 
-          <Link href="/dashboard" className="zf-button font-heading text-[15px] font-bold">
-            Open Pupitar
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
+            <Link href="/login" className="font-heading text-[15px] font-medium text-[#111111] hover:opacity-70">
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-[6px] bg-[#111111] px-4 py-3 font-heading text-[15px] font-bold leading-none text-white transition-colors hover:bg-[#222222]"
+            >
+              Get started →
+            </Link>
+          </div>
         </div>
       </header>
 

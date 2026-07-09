@@ -119,6 +119,11 @@ select:focus-visible {
   box-shadow: 0 0 0 3px rgba(32, 103, 255, 0.14);
 }
 
+.auth-field:focus-visible {
+  border-color: #111111 !important;
+  box-shadow: none !important;
+}
+
 @keyframes zf-fade-up {
   from {
     opacity: 0;

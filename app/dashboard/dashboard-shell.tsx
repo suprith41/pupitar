@@ -183,9 +183,20 @@ function NewRepoModal({
     }
 
     const supabase = createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setIsSubmitting(false);
+      setError("Please log in again.");
+      return;
+    }
+
     const { data, error: insertError } = await supabase
       .from("repos")
       .insert({
+        owner_id: user.id,
         name: repoName,
         description: description.trim() || null,
         is_public: isPublic
