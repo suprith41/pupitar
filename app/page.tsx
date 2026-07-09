@@ -185,7 +185,7 @@ export default function Home() {
                   Dashboard →
                 </Link>
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111111] text-[13px] font-bold text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-white"
                   aria-label={sessionEmail}
                   title={sessionEmail}
                   style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
