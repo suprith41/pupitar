@@ -241,7 +241,7 @@ export default function Home() {
             <p className="zf-reveal mt-7 max-w-[640px] text-[22px] leading-[1.45] text-[#363636] md:text-[28px]">
               Branch, eval, and deploy AI prompts with full version history and a live API endpoint.
             </p>
-            <Link href="/dashboard" className="zf-button zf-reveal mt-8 text-[18px]">
+            <Link href={sessionEmail ? "/dashboard" : "/signup"} className="zf-button zf-reveal mt-8 text-[18px]">
               Get started →
             </Link>
           </div>
@@ -380,7 +380,7 @@ export default function Home() {
             When in doubt, version it.
           </h2>
           <p className="mt-6 text-[24px] leading-[1.35] text-white/85 md:text-[32px]">We&apos;re all iterating.</p>
-          <Link href="/dashboard" className="zf-button is-secondary mt-9 text-[18px]">
+          <Link href={sessionEmail ? "/dashboard" : "/signup"} className="zf-button is-secondary mt-9 text-[18px]">
             Open Pupitar
           </Link>
         </div>

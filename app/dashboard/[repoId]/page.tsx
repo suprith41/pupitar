@@ -112,14 +112,16 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
   }
 
   return (
-    <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-10 md:py-8">
-      <section className="mx-auto flex w-full max-w-[960px] flex-col">
+    <main className="min-h-screen bg-bg px-6 py-6 text-ink md:px-8 md:py-8">
+      <section className="mx-auto flex w-full max-w-none flex-col">
         <RepoEditorShell
           repo={repo}
           initialVersions={versions ?? []}
           initialBranches={branches ?? []}
           initialEvalCases={evalCases ?? []}
           deploymentVersionId={deployment?.active_version_id ?? null}
+          currentUserEmail={user.email ?? null}
+          currentUserLabel={user.email?.split("@")[0] ?? "account"}
         />
       </section>
     </main>

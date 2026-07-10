@@ -3,7 +3,7 @@
 const DiffMatchPatch = require("diff-match-patch");
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +32,8 @@ type RepoEditorShellProps = {
   initialBranches: BranchRow[];
   initialEvalCases: EvalCaseRow[];
   deploymentVersionId?: string | null;
+  currentUserEmail?: string | null;
+  currentUserLabel?: string;
 };
 
 type DeploymentDetails = {
@@ -65,6 +67,9 @@ type MergeFlowState = {
   isMerging: boolean;
   error: string;
 };
+
+type MainTab = "overview" | "editor" | "evals" | "changelog";
+type OverviewTab = "content" | "analytics";
 
 function toBranchOption(branch: BranchRow, repoId: string): BranchOption {
   return {
@@ -244,12 +249,126 @@ function getMergeThresholdMessage(score: number, total: number) {
   return `need ${threshold}/${total}`;
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+function getVersionDisplayNumber(version: PromptVersion, orderedVersions: PromptVersion[]) {
+  const newestFirstIndex = orderedVersions.findIndex((item) => item.id === version.id);
+  return newestFirstIndex === -1 ? orderedVersions.length : orderedVersions.length - newestFirstIndex;
+}
+
+function renderPromptContent(text: string) {
+  const lines = text.split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+
+  function flushBullets() {
+    if (bullets.length === 0) {
+      return;
+    }
+
+    blocks.push(
+      <ul key={`bullets-${blocks.length}`} className="mb-5 ml-5 list-disc space-y-2">
+        {bullets.map((item, index) => (
+          <li key={`${item}-${index}`} className="font-serif text-[15px] leading-7 text-ink">
+            {item}
+          </li>
+        ))}
+      </ul>
+    );
+    bullets = [];
+  }
+
+  lines.forEach((line, index) => {
+    const key = `${index}-${line}`;
+    const trimmed = line.trim();
+
+    if (trimmed === "") {
+      flushBullets();
+      blocks.push(<div key={key} className="h-4" />);
+      return;
+    }
+
+    if (trimmed.startsWith("### ")) {
+      flushBullets();
+      blocks.push(
+        <h3 key={key} className="mb-4 text-[18px] font-bold leading-7 text-ink">
+          {trimmed.slice(4)}
+        </h3>
+      );
+      return;
+    }
+
+    if (trimmed.startsWith("## ")) {
+      flushBullets();
+      blocks.push(
+        <h2 key={key} className="mb-4 text-[22px] font-bold leading-8 text-ink">
+          {trimmed.slice(3)}
+        </h2>
+      );
+      return;
+    }
+
+    if (trimmed.startsWith("# ")) {
+      flushBullets();
+      blocks.push(
+        <h1 key={key} className="mb-5 text-[28px] font-bold leading-9 text-ink">
+          {trimmed.slice(2)}
+        </h1>
+      );
+      return;
+    }
+
+    if (trimmed.startsWith("- ")) {
+      bullets.push(trimmed.slice(2));
+      return;
+    }
+
+    flushBullets();
+    blocks.push(
+      <p key={key} className="mb-4 font-serif text-[15px] leading-7 text-ink">
+        {line}
+      </p>
+    );
+  });
+
+  flushBullets();
+
+  if (blocks.length === 0) {
+    blocks.push(
+      <p key="empty" className="font-serif text-[15px] leading-7 text-muted">
+        No content yet.
+      </p>
+    );
+  }
+
+  return blocks;
+}
+
+function isMergeWithoutEvals(version: PromptVersion) {
+  return (
+    version.eval_score == null &&
+    version.eval_total == null &&
+    typeof version.commit_message === "string" &&
+    version.commit_message.startsWith("Merged from ")
+  );
+}
+
 export default function RepoEditorShell({
   repo,
   initialVersions,
   initialBranches,
   initialEvalCases,
-  deploymentVersionId = null
+  deploymentVersionId = null,
+  currentUserEmail = null,
+  currentUserLabel = "account"
 }: RepoEditorShellProps) {
   const [versions, setVersions] = useState(initialVersions);
   const [evalCases, setEvalCases] = useState(initialEvalCases);
@@ -278,7 +397,8 @@ export default function RepoEditorShell({
   );
   const [previewVersion, setPreviewVersion] = useState<PromptVersion | null>(null);
   const [diffVersionId, setDiffVersionId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"editor" | "evals">("editor");
+  const [activeTab, setActiveTab] = useState<MainTab>("overview");
+  const [overviewTab, setOverviewTab] = useState<OverviewTab>("content");
   const [isGeneratingEvals, setIsGeneratingEvals] = useState(false);
   const [isRunningEvals, setIsRunningEvals] = useState(false);
   const [evalRunResults, setEvalRunResults] = useState<EvalRunCaseResult[] | null>(null);
@@ -338,12 +458,27 @@ export default function RepoEditorShell({
     [currentBranchLatestVersion, diffSourceVersion]
   );
   const mostRecentVersion = orderedVersions[0] ?? null;
+  const selectedVersion = useMemo(() => {
+    if (previewVersion) {
+      return previewVersion;
+    }
+
+    if (activeVersionId) {
+      return orderedVersions.find((version) => version.id === activeVersionId) ?? null;
+    }
+
+    return currentBranchLatestVersion ?? mostRecentVersion;
+  }, [activeVersionId, currentBranchLatestVersion, mostRecentVersion, orderedVersions, previewVersion]);
+  const selectedVersionNumber = selectedVersion ? getVersionDisplayNumber(selectedVersion, orderedVersions) : orderedVersions.length;
+  const selectedVersionId = selectedVersion?.id ?? null;
   const deployedVersionLabel =
     deploymentVersionId == null ? null : formatDeploymentLabel(deploymentVersionId, orderedVersions);
   const isPreviewing = Boolean(previewVersion);
   const isDiffView = Boolean(diffSourceVersion && currentBranchLatestVersion);
   const canDeploy = Boolean(mostRecentVersion);
-  const diffSourceVersionNumber = diffSourceVersion ? getVersionNumber(diffSourceVersion) : null;
+  const diffSourceVersionNumber = diffSourceVersion
+    ? getVersionDisplayNumber(diffSourceVersion, orderedVersions)
+    : null;
   const isMergeGateActive = Boolean(mergeFlow);
 
   useEffect(
@@ -363,17 +498,14 @@ export default function RepoEditorShell({
     []
   );
 
-  function getVersionNumber(version: PromptVersion) {
-    const newestFirstIndex = orderedVersions.findIndex((item) => item.id === version.id);
-    return newestFirstIndex === -1 ? orderedVersions.length : orderedVersions.length - newestFirstIndex;
-  }
-
   function syncEditorToBranch(branch: BranchOption | null) {
     const seedVersion = getSeedVersion(versions, branch, branch?.id ?? null);
 
     setSelectedBranchId(branch?.id ?? null);
     setPreviewVersion(null);
     setDiffVersionId(null);
+    setActiveTab("overview");
+    setOverviewTab("content");
     setCommitMessage("");
     setStatus("");
     setError("");
@@ -535,7 +667,8 @@ export default function RepoEditorShell({
   }
 
   function loadVersion(version: PromptVersion) {
-    setActiveTab("editor");
+    setActiveTab("overview");
+    setOverviewTab("content");
     setPreviewVersion(version);
     setDiffVersionId(null);
     setContent(version.content);
@@ -552,7 +685,8 @@ export default function RepoEditorShell({
   }
 
   function openDiff(version: PromptVersion) {
-    setActiveTab("editor");
+    setActiveTab("overview");
+    setOverviewTab("content");
     setDiffVersionId(version.id);
     setPreviewVersion(null);
     setStatus("");
@@ -824,7 +958,8 @@ export default function RepoEditorShell({
       return;
     }
 
-    setActiveTab("editor");
+    setActiveTab("overview");
+    setOverviewTab("content");
     setPreviewVersion(null);
     setDiffVersionId(null);
     setError("");
@@ -985,17 +1120,26 @@ export default function RepoEditorShell({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
-      <section className="flex min-w-0 flex-col gap-6">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-6">
-          <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-ink">
-            <Link href="/dashboard" className="shrink-0 uppercase tracking-[-0.02em]">
-              PUPITAR
-            </Link>
-            <span className="text-line">/</span>
-            <span className="shrink-0 text-muted font-medium">suprith</span>
-            <span className="text-line">/</span>
-            <span className="truncate text-ink font-bold">{repo.name}</span>
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <header className="flex flex-col gap-5 border-b border-line pb-5">
+        <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-muted">
+          <Link href="/dashboard" className="text-ink transition-colors hover:text-accent">
+            ← Back
+          </Link>
+          <span className="text-line">|</span>
+          <span>Home</span>
+          <span className="text-line">|</span>
+          <span className="truncate text-ink">{repo.name}</span>
+          <span className="text-line">|</span>
+          <span className="text-ink">prompt.md</span>
+        </div>
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-[24px] font-bold tracking-[-0.03em] text-ink">{repo.name}</h1>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <BranchSwitcher
               branches={branches}
               currentBranch={currentBranch}
@@ -1003,202 +1147,488 @@ export default function RepoEditorShell({
               onCreateBranch={createBranch}
               onMergeIntoMain={startMergeGate}
             />
-          </div>
-
-          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="rounded-pill border border-line bg-white px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-ink"
+            >
+              No Tags
+            </button>
+            <button
+              type="button"
+              className="rounded-pill border border-transparent px-3 py-1.5 text-sm font-medium text-error transition-colors hover:border-[#F9D6D3] hover:bg-[#FEF3F2]"
+            >
+              Delete
+            </button>
             {deployedVersionLabel == null ? null : (
-              <span
-                className={`rounded-pill border-2 px-3 py-1 font-mono text-xs font-bold ${
-                  deployFeedback ? "border-accent text-accent bg-accent/5" : "border-accent text-accent bg-accent/5"
-                }`}
-              >
+              <span className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs font-medium text-muted">
                 {deployedVersionLabel}
               </span>
             )}
-            <UserAvatar />
           </div>
-        </header>
-
-        <div className="flex items-center gap-1 border-b border-line pb-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab("editor")}
-            className={`rounded-pill px-4 py-2 text-sm font-semibold transition-all ${
-              activeTab === "editor"
-                ? "bg-accent text-white shadow-blue"
-                : "text-muted hover:text-ink hover:bg-panel"
-            }`}
-          >
-            Editor
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("evals")}
-            className={`rounded-pill px-4 py-2 text-sm font-semibold transition-all ${
-              activeTab === "evals"
-                ? "bg-accent text-white shadow-blue"
-                : "text-muted hover:text-ink hover:bg-panel"
-            }`}
-          >
-            Evals
-          </button>
         </div>
 
-        {activeTab === "editor" ? (
-          <>
-            <div className="flex flex-wrap items-baseline gap-2">
-              <h1 className="break-words text-2xl font-semibold text-ink">{repo.name}</h1>
-              <span className="font-mono text-sm text-muted">/ prompt.md</span>
-            </div>
+        <nav className="flex items-center gap-6">
+          {[
+            { key: "overview" as const, label: "Overview" },
+            { key: "editor" as const, label: "Editor" },
+            { key: "evals" as const, label: "Evals" },
+            { key: "changelog" as const, label: "Changelog" }
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key !== "overview") {
+                    setOverviewTab("content");
+                  }
+                }}
+                className={`border-b-2 pb-3 text-sm transition-colors ${
+                  isActive
+                    ? "border-accent font-medium text-ink"
+                    : "border-transparent font-normal text-muted hover:text-ink"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
 
-            {mergeMessage ? <p className="text-sm leading-6 text-muted">{mergeMessage}</p> : null}
+      <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="flex min-h-0 flex-col overflow-hidden border border-line bg-white">
+          <div className="flex items-center gap-2 border-b border-line px-4 py-4">
+            <VersionsIcon />
+            <p className="text-[14px] font-semibold text-ink">Versions</p>
+          </div>
 
-            {mergeFlow ? (
-              <MergeGatePanel
-                flow={mergeFlow}
-                onConfirm={confirmMerge}
-                onCancel={resetMergeFlow}
-              />
-            ) : isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
-              <DiffViewPanel
-                sourceVersion={diffSourceVersion}
-                currentVersion={currentBranchLatestVersion}
-                sourceVersionNumber={diffSourceVersionNumber ?? 0}
-                diffRows={diffRows}
-                onBack={exitDiffView}
-              />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {orderedVersions.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-muted">No versions yet.</p>
             ) : (
-              <>
-                {isPreviewing ? (
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-3">
-                    <p className="text-sm text-muted">
-                      Previewing v{previewVersion ? getVersionNumber(previewVersion) : orderedVersions.length}{" "}
-                      - this is read only
-                    </p>
-                    <div className="flex gap-2">
+              <div className="flex flex-col">
+                {orderedVersions.map((version) => {
+                  const versionNumber = getVersionDisplayNumber(version, orderedVersions);
+                  const isCurrent = selectedVersionId === version.id;
+                  const isMainVersion = isLegacyMainVersion(version, currentBranch?.is_main ? currentBranch.id : null);
+
+                  return (
+                    <div
+                      key={version.id}
+                      className={`border-b border-line last:border-b-0 ${
+                        isCurrent ? "bg-[#EEF4FF] border-l-[3px] border-l-accent" : ""
+                      }`}
+                    >
                       <button
                         type="button"
-                        onClick={exitPreview}
-                        className="rounded-sm border border-line px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                        onClick={() => loadVersion(version)}
+                        className="flex w-full items-start gap-3 px-4 py-4 text-left"
                       >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onRestore}
-                        disabled={isCommitting}
-                        className="rounded-sm border border-line bg-surface px-3 py-2 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isCommitting ? "Restoring..." : "Restore this version"}
+                        <span
+                          className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                            isCurrent ? "border-accent" : "border-[#B8C1D1]"
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {isCurrent ? <span className="h-2 w-2 rounded-full bg-accent" /> : null}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-[14px] font-semibold text-ink">
+                                Version {versionNumber}
+                              </p>
+                              <p className="mt-1 text-[12px] text-muted">{formatDateTime(version.created_at)}</p>
+                              <p className="mt-1 text-[12px] text-muted">• {currentUserLabel}</p>
+                            </div>
+                            {version.eval_score != null && version.eval_total != null ? (
+                              <span className="rounded-pill border border-line bg-white px-2 py-0.5 text-[11px] font-medium text-muted">
+                                {version.eval_score}/{version.eval_total}
+                              </span>
+                            ) : isMergeWithoutEvals(version) ? (
+                              <span className="rounded-pill border border-line bg-white px-2 py-0.5 text-[11px] font-medium text-muted">
+                                No evals
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openDiff(version);
+                              }}
+                              className="text-[11px] font-medium text-accent transition-colors hover:text-ink"
+                            >
+                              Diff
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                              }}
+                              aria-label="Release label placeholder"
+                              title="Release label coming soon"
+                              className="text-[11px] font-medium text-muted transition-colors hover:text-ink"
+                            >
+                              Release Label +
+                            </button>
+                          </div>
+                          <p className="sr-only">{isMainVersion ? "main branch version" : "branch version"}</p>
+                        </div>
                       </button>
                     </div>
-                  </div>
-                ) : null}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </aside>
 
-                <textarea
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  readOnly={isPreviewing}
-                  spellCheck={false}
-                  className={`min-h-[520px] w-full resize-none rounded-lg border-2 bg-surface p-5 font-mono text-sm leading-7 text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)] read-only:text-muted ${
-                    isPreviewing ? "border-accent/50" : "border-line"
-                  }`}
-                  placeholder="Write the system prompt..."
-                />
+        <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border border-line bg-white">
+          {activeTab === "overview" ? (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
+                <div className="flex items-center gap-2">
+                  {[
+                    { key: "content" as const, label: "Content" },
+                    { key: "analytics" as const, label: "Analytics & Logs" }
+                  ].map((tab) => {
+                    const isActive = overviewTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setOverviewTab(tab.key)}
+                        className={`border-b-2 pb-3 text-sm transition-colors ${
+                          isActive
+                            ? "border-accent font-medium text-ink"
+                            : "border-transparent font-normal text-muted hover:text-ink"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
 
-                <form className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center" onSubmit={onCommit}>
-                  <input
-                    value={commitMessage}
-                    onChange={(event) => setCommitMessage(event.target.value)}
-                    disabled={isPreviewing}
-                    className="min-w-0 flex-1 rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="Commit message"
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("editor")}
+                    className="rounded-pill border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Settings"
+                    className="rounded-full border border-line bg-white p-2 text-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    <GearIcon />
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-b border-line px-5 py-3 text-[13px] text-muted">
+                Viewing Version {selectedVersionNumber} of {orderedVersions.length}
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#FCFBF7] p-5">
+                {mergeMessage ? <p className="mb-4 text-sm text-muted">{mergeMessage}</p> : null}
+
+                {mergeFlow ? (
+                  <MergeGatePanel flow={mergeFlow} onConfirm={confirmMerge} onCancel={resetMergeFlow} />
+                ) : isDiffView && diffSourceVersion && currentBranchLatestVersion ? (
+                  <DiffViewPanel
+                    sourceVersion={diffSourceVersion}
+                    currentVersion={currentBranchLatestVersion}
+                    sourceVersionNumber={diffSourceVersionNumber ?? 0}
+                    diffRows={diffRows}
+                    onBack={exitDiffView}
                   />
+                ) : overviewTab === "analytics" ? (
+                  <div className="rounded-[20px] border border-line bg-white px-8 py-10 text-sm text-muted">
+                    Coming soon
+                  </div>
+                ) : (
+                  <>
+                    <div className="rounded-[24px] border border-line bg-white p-8">
+                      <div className="mb-6 flex items-center justify-between gap-4">
+                        <span className="rounded-pill bg-[#F5F5F5] px-3 py-1 text-[12px] font-medium text-muted">
+                          System
+                        </span>
+                        {previewVersion ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={exitPreview}
+                              className="text-[13px] font-medium text-muted transition-colors hover:text-ink"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={onRestore}
+                              disabled={isCommitting}
+                              className="rounded-pill border border-line bg-white px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isCommitting ? "Restoring..." : "Restore version"}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="max-w-[900px]">
+                        {renderPromptContent(selectedVersion?.content ?? "")}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[20px] border border-line bg-white px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted">
+                        <span className="font-medium text-ink">Placeholder</span>
+                        <span>{model}</span>
+                        <span>Temperature {temperature.toFixed(1)}</span>
+                        <span>Max tokens {maxTokens}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : activeTab === "editor" ? (
+            <div className="flex min-h-0 flex-1 flex-col gap-5 p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[13px] text-muted">Editing prompt.md</p>
+                  <p className="mt-1 text-[24px] font-bold tracking-[-0.03em] text-ink">{repo.name}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Settings"
+                  className="rounded-full border border-line bg-white p-2 text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  <GearIcon />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 text-[13px] text-muted">
+                <span>
+                  Viewing Version {selectedVersionNumber} of {orderedVersions.length}
+                </span>
+                {selectedVersion?.commit_message ? <span>{selectedVersion.commit_message}</span> : null}
+              </div>
+
+              {mergeFlow ? (
+                <MergeGatePanel flow={mergeFlow} onConfirm={confirmMerge} onCancel={resetMergeFlow} />
+              ) : null}
+
+              {isPreviewing ? (
+                <div className="flex items-center justify-between gap-3 rounded-[20px] border border-line bg-[#F9FAFB] px-4 py-3">
+                  <p className="text-sm text-muted">
+                    Previewing v{selectedVersionNumber} - this is read only
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={exitPreview}
+                      className="rounded-pill border border-line bg-white px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-ink"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onRestore}
+                      disabled={isCommitting}
+                      className="rounded-pill border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isCommitting ? "Restoring..." : "Restore version"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <textarea
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                readOnly={isPreviewing}
+                spellCheck={false}
+                className={`min-h-[420px] w-full flex-1 resize-none border border-line bg-white p-6 font-serif text-[15px] leading-7 text-ink outline-none transition-all placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)] read-only:text-muted`}
+                placeholder="Write the system prompt..."
+              />
+
+              <form className="flex flex-col gap-3 rounded-[20px] border border-line bg-white p-4" onSubmit={onCommit}>
+                <input
+                  value={commitMessage}
+                  onChange={(event) => setCommitMessage(event.target.value)}
+                  disabled={isPreviewing}
+                  className="w-full rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-muted focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="Commit message"
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <button
                     type="submit"
                     disabled={isCommitting || isPreviewing}
-                    className="rounded-pill bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-blue transition-all hover:bg-accent-hover hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+                    className="rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isCommitting ? "Committing..." : commitFeedback ? "Committed ✓" : "Commit →"}
+                    {isCommitting ? "Committing..." : commitFeedback ? "Committed" : "Commit"}
                   </button>
-                </form>
+                  {error ? <p className="text-sm text-error">{error}</p> : status ? <p className="text-sm text-muted">{status}</p> : null}
+                </div>
+              </form>
 
-                <section className="border-t border-line pt-8">
-                  <h2 className="text-[11px] uppercase tracking-[0.15em] text-muted">Playground</h2>
-                  <form className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center" onSubmit={onRun}>
+              <section className="grid gap-5 rounded-[20px] border border-line bg-white p-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Playground</p>
+                    <button
+                      type="button"
+                      onClick={onDeploy}
+                      disabled={isDeploying || !canDeploy}
+                      className="rounded-pill bg-nav px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isDeploying ? "Deploying..." : "Deploy"}
+                    </button>
+                  </div>
+
+                  <form className="flex flex-col gap-3 sm:flex-row sm:items-center" onSubmit={onRun}>
                     <input
                       value={testMessage}
                       onChange={(event) => setTestMessage(event.target.value)}
-                      className="min-w-0 flex-1 border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                      className="min-w-0 flex-1 rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
                       placeholder="Type a test message..."
                     />
                     <button
                       type="submit"
                       disabled={isRunning || !testMessage.trim()}
-                      className="border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-pill border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isRunning ? "Running..." : "Run →"}
+                      {isRunning ? "Running..." : "Run"}
                     </button>
                   </form>
-                  <div className="mt-4 min-h-32 border-t border-line pt-4">
+                  <div className="min-h-32 rounded-[16px] border border-line bg-[#FCFBF7] p-4">
                     <p className={`whitespace-pre-wrap text-sm leading-7 ${playgroundError ? "text-error" : "text-muted"}`}>
                       {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
                     </p>
                   </div>
-                </section>
+                </div>
 
-                {error ? <p className="text-sm leading-7 text-error">{error}</p> : null}
-                {status ? <p className="text-sm leading-6 text-muted">{status}</p> : null}
-              </>
-            )}
-          </>
-        ) : (
-          <section className="flex flex-col gap-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Evals</p>
-                <p className="mt-2 text-lg font-medium tracking-[-0.03em] text-ink">
-                  Run repo-specific cases against the current branch.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsGenerateModalOpen(true)}
-                  className="border border-line bg-surface px-3 py-2 text-sm text-ink transition-colors hover:border-accent hover:text-accent"
-                >
-                  AI generate
-                </button>
-                <button
-                  type="button"
-                  onClick={runEvals}
-                  disabled={isRunningEvals || evalCases.length === 0 || !currentBranchLatestVersion}
-                  className="border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isRunningEvals
-                    ? `Running ${evalCases.length} evals...`
-                    : "Run evals"}
-                </button>
-              </div>
+                <div className="flex flex-col gap-4">
+                  <label className="flex flex-col gap-2 text-sm text-muted">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Model</span>
+                    <select
+                      value={model}
+                      onChange={(event) => setModel(event.target.value)}
+                      className="rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent"
+                    >
+                      {models.map((modelName) => (
+                        <option key={modelName} value={modelName}>
+                          {modelName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="flex flex-col gap-2 text-sm text-muted">
+                    <span className="flex items-center justify-between gap-4">
+                      <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Temperature</span>
+                      <span className="font-mono text-xs text-ink">{temperature.toFixed(1)}</span>
+                    </span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={temperature}
+                      onChange={(event) => setTemperature(Number(event.target.value))}
+                      className="accent-accent"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-2 text-sm text-muted">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Max tokens</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={maxTokens}
+                      onChange={(event) => setMaxTokens(Number(event.target.value))}
+                      className="rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent"
+                    />
+                  </label>
+
+                  {deploymentDetails ? (
+                    <div className="rounded-[16px] border border-line bg-[#FCFBF7] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Live endpoint</p>
+                      <code className="mt-3 block break-all rounded-md border border-line bg-white px-3 py-2 font-mono text-xs font-semibold text-accent">
+                        POST {deploymentDetails.endpoint_url}
+                      </code>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                        <code className="block break-all rounded-md border border-line bg-white px-3 py-2 font-mono text-xs text-muted">
+                          {deploymentDetails.api_key}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => copyApiKey(deploymentDetails.api_key)}
+                          className="rounded-md bg-white px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+                        >
+                          {didCopyApiKey ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-muted">
+                        Pass your api_key as Authorization: Bearer {deploymentDetails.api_key} header
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
             </div>
-
-            {evalRunSummary ? (
-              <div className="border-t border-line py-4">
-                <p className="font-mono text-sm text-ink">
-                  {evalRunSummary.score} / {evalRunSummary.total} passed
-                </p>
+          ) : activeTab === "evals" ? (
+            <div className="flex min-h-0 flex-1 flex-col gap-5 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Evals</p>
+                  <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-ink">
+                    Run repo-specific cases against the current branch.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsGenerateModalOpen(true)}
+                    className="rounded-pill border border-line bg-white px-3 py-2 text-sm text-ink transition-colors hover:border-accent hover:text-accent"
+                  >
+                    AI generate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={runEvals}
+                    disabled={isRunningEvals || evalCases.length === 0 || !currentBranchLatestVersion}
+                    className="rounded-pill border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isRunningEvals ? `Running ${evalCases.length} evals...` : "Run evals"}
+                  </button>
+                </div>
               </div>
-            ) : null}
 
-            <div className="border-t border-line pt-4">
-              <div className="flex flex-col gap-3">
+              {evalRunSummary ? (
+                <div className="rounded-[16px] border border-line bg-[#FCFBF7] px-4 py-3">
+                  <p className="font-mono text-sm text-ink">
+                    {evalRunSummary.score} / {evalRunSummary.total} passed
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
                 {evalCases.length === 0 ? (
                   <p className="text-sm text-muted">No eval cases yet.</p>
                 ) : (
                   evalCases.map((evalCase) => {
                     const result = evalRunResults?.find((item) => item.eval_case_id === evalCase.id);
                     return (
-                      <div key={evalCase.id} className="border border-line bg-panel p-4">
+                      <div key={evalCase.id} className="rounded-[16px] border border-line bg-white p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <p className="text-sm text-ink">{evalCase.input}</p>
@@ -1238,241 +1668,131 @@ export default function RepoEditorShell({
                   })
                 )}
               </div>
-            </div>
 
-            <div className="border-t border-line pt-8">
-              <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Add eval case</p>
-              <div className="grid gap-3">
-                <input
-                  value={newEvalInput}
-                  onChange={(event) => setNewEvalInput(event.target.value)}
-                  className="border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-                  placeholder="Test input"
-                />
-                <input
-                  value={newEvalExpectedOutcome}
-                  onChange={(event) => setNewEvalExpectedOutcome(event.target.value)}
-                  className="border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-                  placeholder="Expected outcome"
-                />
-                <input
-                  value={newEvalDescription}
-                  onChange={(event) => setNewEvalDescription(event.target.value)}
-                  className="border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-                  placeholder="Description"
-                />
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={addEvalCase}
-                    disabled={isAddingEvalCase}
-                    className="text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
-                  >
-                    {isAddingEvalCase ? "Adding..." : "Add →"}
-                  </button>
-                  {evalError ? <p className="text-sm text-error">{evalError}</p> : null}
-                </div>
-              </div>
-            </div>
-
-            {isGenerateModalOpen ? (
-              <div className="fixed inset-0 z-40 flex items-center justify-center bg-nav/80 backdrop-blur-sm px-6 py-8">
-                <div className="w-full max-w-md rounded-xl border-2 border-line bg-surface p-5 shadow-elevated">
-                  <div className="flex items-center justify-between gap-4">
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">AI generate</h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsGenerateModalOpen(false);
-                        setGenerateError("");
-                      }}
-                      className="text-sm text-muted transition-colors hover:text-ink"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-muted">
-                    Describe your prompt&apos;s purpose in one sentence
-                  </p>
-                  <textarea
-                    value={generatePurpose}
-                    onChange={(event) => setGeneratePurpose(event.target.value)}
-                    className="mt-4 min-h-28 w-full resize-none border border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
-                    placeholder="e.g. help support agents decide whether to approve a refund"
+              <div className="rounded-[20px] border border-line bg-white p-5">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Add eval case</p>
+                <div className="mt-3 grid gap-3">
+                  <input
+                    value={newEvalInput}
+                    onChange={(event) => setNewEvalInput(event.target.value)}
+                    className="rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="Test input"
                   />
-                  {generateError ? <p className="mt-3 text-sm text-error">{generateError}</p> : null}
-                  <div className="mt-4 flex items-center gap-2">
+                  <input
+                    value={newEvalExpectedOutcome}
+                    onChange={(event) => setNewEvalExpectedOutcome(event.target.value)}
+                    className="rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="Expected outcome"
+                  />
+                  <input
+                    value={newEvalDescription}
+                    onChange={(event) => setNewEvalDescription(event.target.value)}
+                    className="rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="Description"
+                  />
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={generateEvalCases}
-                      disabled={isGeneratingEvals}
+                      onClick={addEvalCase}
+                      disabled={isAddingEvalCase}
                       className="text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
                     >
-                      {isGeneratingEvals ? "Generating..." : "Generate →"}
+                      {isAddingEvalCase ? "Adding..." : "Add →"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsGenerateModalOpen(false);
-                        setGenerateError("");
-                      }}
-                      className="text-sm text-muted transition-colors hover:text-ink"
-                    >
-                      Cancel
-                    </button>
+                    {evalError ? <p className="text-sm text-error">{evalError}</p> : null}
                   </div>
                 </div>
               </div>
-            ) : null}
 
-          </section>
-        )}
-      </section>
-
-      <aside className="flex min-w-0 flex-col gap-6 border-line lg:border-l lg:pl-6">
-        <section className="flex flex-col gap-5 border-t border-line pt-6">
-          <label className="flex flex-col gap-2 text-sm text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Model</span>
-            <select
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
-            >
-              {models.map((modelName) => (
-                <option key={modelName} value={modelName}>
-                  {modelName}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm text-muted">
-            <span className="flex items-center justify-between gap-4">
-              <span className="text-[11px] uppercase tracking-[0.15em] text-muted">Temperature</span>
-              <span className="font-mono text-xs text-ink">{temperature.toFixed(1)}</span>
-            </span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={temperature}
-              onChange={(event) => setTemperature(Number(event.target.value))}
-              className="accent-accent"
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Max tokens</span>
-            <input
-              type="number"
-              min="1"
-              value={maxTokens}
-              onChange={(event) => setMaxTokens(Number(event.target.value))}
-              className="rounded-md border-2 border-line bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(32,103,255,0.14)]"
-            />
-          </label>
-
-          <button
-            type="button"
-            onClick={onDeploy}
-            disabled={isDeploying || !canDeploy}
-            className="w-fit rounded-pill bg-nav px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-ink hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isDeploying ? "Deploying..." : "Deploy"}
-          </button>
-
-          {deploymentDetails ? (
-            <div className="rounded-lg border-2 border-line bg-panel p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Live endpoint</p>
-              <code className="mt-3 block break-all rounded-md border-2 border-line bg-surface px-3 py-2 font-mono text-xs font-semibold text-accent">
-                POST {deploymentDetails.endpoint_url}
-              </code>
-              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <code className="block break-all rounded-md border-2 border-line bg-surface px-3 py-2 font-mono text-xs text-muted">
-                  {deploymentDetails.api_key}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => copyApiKey(deploymentDetails.api_key)}
-                  className="rounded-md bg-panel px-3 py-1 text-sm font-semibold text-muted transition-colors hover:text-ink"
-                >
-                  {didCopyApiKey ? "Copied" : "Copy"}
-                </button>
-              </div>
-              <p className="mt-3 text-xs leading-5 text-muted">
-                Pass your api_key as Authorization: Bearer {deploymentDetails.api_key} header
-              </p>
-            </div>
-          ) : null}
-        </section>
-
-        <section className="flex flex-col gap-3 border-t border-line pt-6">
-          <h2 className="text-[11px] uppercase tracking-[0.15em] text-muted">History</h2>
-          {currentBranchVersions.length === 0 ? (
-            <p className="text-sm leading-6 text-muted">No commits yet.</p>
-          ) : (
-            <div className="flex flex-col gap-0">
-              {currentBranchVersions.map((version) => {
-                const isCurrent = previewVersion?.id === version.id || (!isPreviewing && activeVersionId === version.id);
-                const isMainVersion = isLegacyMainVersion(version, currentBranch?.is_main ? currentBranch.id : null);
-                const isMergeWithoutEvals =
-                  version.eval_score == null &&
-                  version.eval_total == null &&
-                  typeof version.commit_message === "string" &&
-                  version.commit_message.startsWith("Merged from ");
-
-                return (
-                  <div
-                    key={version.id}
-                    className={`flex items-stretch gap-2 border-b border-line py-3 transition-all ${
-                      isCurrent ? "border-l-2 border-accent bg-accent/5 pl-3 rounded-r-md" : "pl-0"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => loadVersion(version)}
-                      className="flex min-w-0 flex-1 items-start gap-2 text-left"
-                    >
-                      <span
-                        className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
-                          isMainVersion ? "bg-muted" : "bg-accent"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-medium text-ink">
-                          {version.commit_message || "Untitled commit"}
-                        </p>
-                        {version.eval_score != null && version.eval_total != null ? (
-                          <p className="mt-1 inline-flex rounded-pill border border-line bg-panel px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
-                            {version.eval_score}/{version.eval_total}
-                          </p>
-                        ) : isMergeWithoutEvals ? (
-                          <p className="mt-1 inline-flex rounded-pill border border-line bg-panel px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
-                            No evals
-                          </p>
-                        ) : null}
-                        <p className="mt-2 font-mono text-xs text-muted">
-                          {formatRelativeTime(version.created_at)}
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => openDiff(version)}
-                      className="shrink-0 self-start font-mono text-[11px] uppercase tracking-[0.16em] text-accent transition-colors hover:text-[#111111]"
-                    >
-                      Diff
-                    </button>
+              {isGenerateModalOpen ? (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-nav/80 px-6 py-8 backdrop-blur-sm">
+                  <div className="w-full max-w-md rounded-[20px] border border-line bg-white p-5 shadow-elevated">
+                    <div className="flex items-center justify-between gap-4">
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">AI generate</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsGenerateModalOpen(false);
+                          setGenerateError("");
+                        }}
+                        className="text-sm text-muted transition-colors hover:text-ink"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <p className="mt-4 text-sm leading-7 text-muted">
+                      Describe your prompt&apos;s purpose in one sentence
+                    </p>
+                    <textarea
+                      value={generatePurpose}
+                      onChange={(event) => setGeneratePurpose(event.target.value)}
+                      className="mt-4 min-h-28 w-full resize-none rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent"
+                      placeholder="e.g. help support agents decide whether to approve a refund"
+                    />
+                    {generateError ? <p className="mt-3 text-sm text-error">{generateError}</p> : null}
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={generateEvalCases}
+                        disabled={isGeneratingEvals}
+                        className="text-sm text-ink transition-colors hover:text-muted disabled:cursor-not-allowed disabled:text-muted"
+                      >
+                        {isGeneratingEvals ? "Generating..." : "Generate →"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsGenerateModalOpen(false);
+                          setGenerateError("");
+                        }}
+                        className="text-sm text-muted transition-colors hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
+              <div className="border-b border-line pb-4">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-muted">Changelog</p>
+                <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-ink">
+                  Commit history for this repo.
+                </p>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {orderedVersions.length === 0 ? (
+                  <p className="text-sm text-muted">No commits yet.</p>
+                ) : (
+                  <div className="flex flex-col">
+                    {orderedVersions.map((version) => {
+                      const versionNumber = getVersionDisplayNumber(version, orderedVersions);
+
+                      return (
+                        <div key={version.id} className="border-b border-line py-4 last:border-b-0">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-ink">Version {versionNumber}</p>
+                              <p className="mt-1 text-sm text-muted">
+                                {version.commit_message || "Untitled commit"}
+                              </p>
+                            </div>
+                            <p className="text-sm text-muted">{formatDateTime(version.created_at)}</p>
+                          </div>
+                          <p className="mt-2 text-sm text-muted">{currentUserEmail ?? "unknown@example.com"}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>
-      </aside>
+      </div>
     </div>
   );
 }
@@ -1863,6 +2183,33 @@ function DiffViewPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function VersionsIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4 text-muted">
+      <path
+        d="M4 5h12M4 10h12M4 15h12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4 text-current">
+      <path
+        d="M8.7 2.7h2.6l.4 1.9c.3.1.7.3 1 .5l1.8-1 1.8 1.8-1 1.8c.2.3.4.7.5 1l1.9.4v2.6l-1.9.4c-.1.3-.3.7-.5 1l1 1.8-1.8 1.8-1.8-1c-.3.2-.7.4-1 .5l-.4 1.9H8.7l-.4-1.9c-.3-.1-.7-.3-1-.5l-1.8 1-1.8-1.8 1-1.8c-.2-.3-.4-.7-.5-1l-1.9-.4V8.7l1.9-.4c.1-.3.3-.7.5-1l-1-1.8 1.8-1.8 1.8 1c.3-.2.7-.4 1-.5l.4-1.9Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
   );
 }
 
