@@ -1,6 +1,7 @@
 import os
 import json
 import secrets
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -171,6 +172,44 @@ def call_groq_completion(
     return completion.choices[0].message.content or ""
 
 
+def run_eval_case(version: dict[str, Any], eval_case: dict[str, Any]) -> dict[str, Any]:
+    try:
+        client = get_groq_client()
+        response_text = call_groq_completion(
+            client,
+            system=version["content"],
+            user=f'{eval_case["input"]}\n\nRespond in one sentence.',
+            model=version["model"],
+            temperature=version["temperature"],
+            max_tokens=version["max_tokens"],
+        )
+        verdict_text = call_groq_completion(
+            client,
+            system="You are grading a prompt response. Reply with only PASS or FAIL.",
+            user=(
+                f'Expected: {eval_case["expected_outcome"]}\n'
+                f'Actual response: {response_text}'
+            ),
+            model=version["model"],
+            temperature=0,
+            max_tokens=8,
+        )
+        passed_case = extract_pass_fail(verdict_text)
+    except Exception:
+        response_text = ""
+        passed_case = False
+
+    return {
+        "eval_case_id": eval_case["id"],
+        "input": eval_case["input"],
+        "expected_outcome": eval_case["expected_outcome"],
+        "description": eval_case.get("description"),
+        "response": response_text,
+        "passed": passed_case,
+        "verdict": "PASS" if passed_case else "FAIL",
+    }
+
+
 @app.post("/api/playground")
 def run_playground(payload: PlaygroundRequest) -> dict[str, str]:
     try:
@@ -335,53 +374,29 @@ def run_evals(payload: RunEvalsRequest) -> dict[str, Any]:
     if not eval_cases:
         raise HTTPException(status_code=404, detail="No eval cases found for this repo.")
 
-    client = get_groq_client()
     results: list[dict[str, Any]] = []
     passed = 0
+    max_workers = min(4, len(eval_cases))
 
-    for eval_case in eval_cases:
-        try:
-            response_text = call_groq_completion(
-                client,
-                system=version["content"],
-                user=f'{eval_case["input"]}\n\nRespond in one sentence.',
-                model=version["model"],
-                temperature=version["temperature"],
-                max_tokens=version["max_tokens"],
-            )
-            verdict_text = call_groq_completion(
-                client,
-                system=(
-                    "You are grading a prompt response. Reply with only PASS or FAIL."
-                ),
-                user=(
-                    f'Expected: {eval_case["expected_outcome"]}\n'
-                    f'Actual response: {response_text}'
-                ),
-                model=version["model"],
-                temperature=0,
-                max_tokens=8,
-            )
-            passed_case = extract_pass_fail(verdict_text)
-        except Exception as exc:
-            response_text = ""
-            passed_case = False
-            verdict_text = f"FAIL: {exc}"
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_index = {
+            executor.submit(run_eval_case, version, eval_case): index
+            for index, eval_case in enumerate(eval_cases)
+        }
 
-        if passed_case:
+        results_by_index: dict[int, dict[str, Any]] = {}
+
+        for future in as_completed(future_to_index):
+            index = future_to_index[future]
+            result = future.result()
+            results_by_index[index] = result
+
+    for index in range(len(eval_cases)):
+        result = results_by_index[index]
+        if result["passed"]:
             passed += 1
 
-        results.append(
-            {
-                "eval_case_id": eval_case["id"],
-                "input": eval_case["input"],
-                "expected_outcome": eval_case["expected_outcome"],
-                "description": eval_case.get("description"),
-                "response": response_text,
-                "passed": passed_case,
-                "verdict": "PASS" if passed_case else "FAIL",
-            }
-        )
+        results.append(result)
 
     total = len(results)
     run_insert = supabase.table("eval_runs").insert(

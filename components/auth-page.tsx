@@ -160,6 +160,7 @@ function SocialButton({
           ? "border-[#E5E7EB] bg-white text-[#111111] hover:bg-[#F9FAFB]"
           : "border-[#111111] bg-[#111111] text-white hover:bg-[#222222]"
       }`}
+      style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
     >
       {isGoogle ? <GoogleIcon /> : <AppleIcon />}
       <span>{label}</span>
@@ -197,6 +198,7 @@ function ComingSoonButton() {
         onFocus={() => setShowTooltip(true)}
         onBlur={() => setShowTooltip(false)}
         className="flex w-full items-center justify-center gap-3 rounded-[6px] border border-[#111111] bg-[#111111] px-5 py-3 text-[14px] font-medium leading-none text-white transition-colors hover:bg-[#222222]"
+        style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
       >
         <AppleIcon />
         <span>Continue with Apple</span>
@@ -208,7 +210,7 @@ function ComingSoonButton() {
         className={`pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 rounded-[6px] bg-[#111111] px-3 py-1.5 text-[12px] leading-none text-white shadow-lg transition-all duration-150 ${
           showTooltip ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
         }`}
-        style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+        style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
       >
         Coming soon
       </div>
@@ -335,7 +337,10 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         </Link>
 
         <div className="mt-10">
-          <h1 className="text-[32px] font-bold leading-[1.1] tracking-[-0.02em] text-[#111111]">
+          <h1
+            className="text-[32px] font-bold leading-[1.1] tracking-[-0.02em] text-[#111111]"
+            style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+          >
             {content.heading}
           </h1>
           <p
@@ -360,6 +365,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             <span className="sr-only">Email</span>
             <input
               className="auth-field w-full rounded-[6px] border border-[#E5E7EB] bg-white px-[14px] py-[10px] text-[14px] leading-[1.45] text-[#111111] outline-none placeholder:text-[#9CA3AF]"
+              style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
               type="email"
               autoComplete="email"
               placeholder="Email"
@@ -375,6 +381,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             <div className="relative">
               <input
                 className="auth-field w-full rounded-[6px] border border-[#E5E7EB] bg-white px-[14px] py-[10px] pr-11 text-[14px] leading-[1.45] text-[#111111] outline-none placeholder:text-[#9CA3AF]"
+                style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
                 type={showPassword ? "text" : "password"}
                 autoComplete={content.passwordAutoComplete}
                 placeholder="Password"
@@ -398,6 +405,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-[6px] bg-[#111111] px-3 py-3 text-[14px] font-bold leading-none text-white transition-colors hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-70"
+            style={{ fontFamily: '"Source Serif 4", Georgia, serif' }}
           >
             {content.submit}
           </button>
@@ -436,8 +444,8 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       <p
         className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[12px] font-medium tracking-wide"
         style={{
-          fontFamily: '"DM Sans", Arial, sans-serif',
-          color: "rgba(255, 255, 255, 0.6)",
+          fontFamily: '"Source Serif 4", Georgia, serif',
+          color: "#000000",
           margin: 0
         }}
       >

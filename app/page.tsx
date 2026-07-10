@@ -162,7 +162,7 @@ export default function Home() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: "linear-gradient(to bottom, rgba(252, 251, 247, 0.05) 0%, rgba(252, 251, 247, 0.01) 60%, #FCFBF7 100%)"
+            background: "linear-gradient(to bottom, rgba(252, 251, 247, 0.05) 0%, rgba(252, 251, 247,0.1) 60%, #FCFBF7 100%)"
           }}
         />
 

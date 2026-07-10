@@ -113,7 +113,7 @@ function PrimaryButton({
         color: "#FFFFFF",
         border: "none",
         borderRadius: 6,
-        fontFamily: T.dmSans,
+        fontFamily: T.serif,
         fontWeight: 700,
         fontSize: 15,
         lineHeight: 1,
@@ -154,7 +154,7 @@ function GhostButton({
         color: hovered ? T.ink : T.muted,
         border: `1px solid ${hovered ? T.ink : T.line}`,
         borderRadius: 6,
-        fontFamily: T.dmSans,
+        fontFamily: T.serif,
         fontWeight: 700,
         fontSize: 15,
         lineHeight: 1,
@@ -176,7 +176,7 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: string }
       htmlFor={htmlFor}
       style={{
         display: "block",
-        fontFamily: T.dmSans,
+        fontFamily: T.serif,
         fontWeight: 500,
         fontSize: 14,
         color: T.ink,
@@ -548,7 +548,7 @@ function EmailChipInput({
                 color: T.accent,
                 display: "flex",
                 alignItems: "center",
-                fontFamily: T.dmSans,
+                fontFamily: T.serif,
                 fontSize: 14,
                 lineHeight: 1
               }}
@@ -971,7 +971,7 @@ export default function OnboardingFlow() {
           bottom: 24,
           left: "50%",
           transform: "translateX(-50%)",
-          fontFamily: T.dmSans,
+          fontFamily: T.serif,
           fontSize: 12,
           fontWeight: 500,
           color: "rgba(255, 255, 255, 0.6)",

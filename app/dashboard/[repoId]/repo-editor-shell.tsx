@@ -723,23 +723,37 @@ export default function RepoEditorShell({
   }
 
   async function requestEvalRun(versionId: string) {
-    const response = await fetch("/api/run-evals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ repo_id: repo.id, version_id: versionId })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
-    const payload = await response.json().catch(() => null);
+    try {
+      const response = await fetch("/api/run-evals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_id: repo.id, version_id: versionId }),
+        signal: controller.signal
+      });
 
-    if (!response.ok) {
-      throw new Error(payload?.detail || "Run evals failed.");
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.detail || "Run evals failed.");
+      }
+
+      return payload as {
+        score?: number;
+        total?: number;
+        results?: EvalRunCaseResult[];
+      };
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new Error("Eval run timed out after 2 minutes.");
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return payload as {
-      score?: number;
-      total?: number;
-      results?: EvalRunCaseResult[];
-    };
   }
 
   async function createBranch(branchName: string) {
