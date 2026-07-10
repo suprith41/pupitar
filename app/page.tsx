@@ -197,6 +197,7 @@ export default function Home() {
                 <>
                   <Link
                     href="/dashboard"
+                    target="_blank"
                     className="font-heading text-[15px] font-medium text-[#111111] transition-colors hover:text-accent"
                   >
                     Dashboard →
