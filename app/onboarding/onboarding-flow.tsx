@@ -3,6 +3,7 @@
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PupitarLogo } from "@/components/logo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -894,8 +895,11 @@ export default function OnboardingFlow() {
         }}
       >
         {/* Logo */}
-        <p
+        <div
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
             fontFamily: T.dmSans,
             fontWeight: 700,
             fontSize: 16,
@@ -904,8 +908,9 @@ export default function OnboardingFlow() {
             lineHeight: 1
           }}
         >
-          Pupitar
-        </p>
+          <PupitarLogo size={18} />
+          <span>Pupitar</span>
+        </div>
 
         <ProgressBar step={currentStep} />
 

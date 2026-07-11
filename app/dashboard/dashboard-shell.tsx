@@ -6,6 +6,7 @@ import { ComponentType, FormEvent, useEffect, useMemo, useRef, useState } from "
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
+import { PupitarLogo } from "@/components/logo";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ function SettingsIcon() {
 
 const NAV_ITEMS = [
   { label: "Home", icon: HomeIcon, href: "/dashboard" },
-  { label: "Repos", icon: ReposIcon, href: "/dashboard" },
+  { label: "Repos", icon: ReposIcon, href: "/dashboard/repos" },
   { label: "Playground", icon: PlaygroundIcon, href: "/dashboard/playground" },
   { label: "Analytics", icon: AnalyticsIcon, href: "/dashboard/analytics" },
   { label: "Settings", icon: SettingsIcon, href: "/dashboard/settings" }
@@ -292,6 +293,9 @@ export function Sidebar({
         <Link
           href="/dashboard"
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
             fontFamily: T.dm,
             fontWeight: 700,
             fontSize: 16,
@@ -300,6 +304,7 @@ export function Sidebar({
             lineHeight: 1
           }}
         >
+          <PupitarLogo size={18} />
           Pupitar
         </Link>
       </div>
@@ -787,7 +792,7 @@ function EmptyState({
 
 // ─── New Repo Modal ────────────────────────────────────────────────────────────
 
-function NewRepoModal({
+export function NewRepoModal({
   isOpen,
   onClose,
   canCreateRepos

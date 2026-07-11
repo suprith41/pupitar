@@ -4,6 +4,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import RepoEditorShell from "./repo-editor-shell";
 import { redirect } from "next/navigation";
+import { PupitarLogo } from "@/components/logo";
 
 export default async function RepoPage({ params }: { params: { repoId: string } }) {
   if (!hasSupabaseConfig()) {
@@ -132,7 +133,8 @@ function RepoPageHeader({ repoName, userLabel }: { repoName: string; userLabel: 
   return (
     <header className="flex items-center justify-between border-b border-line pb-4 pt-1 text-[13px] font-bold uppercase tracking-[0.18em] text-muted">
       <div className="flex min-w-0 items-center gap-2">
-        <Link href="/dashboard" className="shrink-0 tracking-[-0.02em] text-ink">
+        <Link href="/dashboard" className="flex items-center gap-1.5 shrink-0 tracking-[-0.02em] text-ink" style={{ textDecoration: "none" }}>
+          <PupitarLogo size={14} />
           PUPITAR
         </Link>
         <span className="text-line">/</span>

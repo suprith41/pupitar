@@ -4,6 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSupabaseAnonKey, getSupabaseUrl, hasSupabaseConfig } from "@/lib/supabase/env";
+import { PupitarLogo } from "@/components/logo";
 
 const heroTiles = [
   { title: "prompt.md", meta: "main", tone: "bg-accent text-white" },
@@ -174,9 +175,10 @@ export default function Home() {
           <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-4 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-6 md:px-8 md:py-8">
             <Link
               href="/"
-              className="justify-self-center text-[30px] font-bold leading-none tracking-[-0.02em] text-accent md:justify-self-start"
-              style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+              className="justify-self-center flex items-center gap-2 text-[30px] font-bold leading-none tracking-[-0.02em] text-accent md:justify-self-start"
+              style={{ fontFamily: '"DM Sans", Arial, sans-serif', textDecoration: "none" }}
             >
+              <PupitarLogo size={30} />
               Pupitar
             </Link>
 
@@ -390,7 +392,8 @@ export default function Home() {
       <footer className="border-t border-line bg-white px-5 py-8 md:px-8">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-[18px] text-[#363636] md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-bold text-accent">
+            <Link href="/" className="flex items-center gap-2 font-bold text-accent" style={{ textDecoration: "none" }}>
+              <PupitarLogo size={20} />
               Pupitar
             </Link>
             <span className="text-sm text-[#706E6E]">|</span>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PupitarLogo } from "@/components/logo";
 
 type AuthMode = "login" | "signup";
 type OAuthProvider = "google" | "apple";
@@ -330,9 +331,10 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       >
         <Link
           href="/"
-          className="text-[18px] font-bold leading-none text-[#111111]"
-          style={{ fontFamily: '"DM Sans", Arial, sans-serif' }}
+          className="flex items-center gap-2 text-[18px] font-bold leading-none text-[#111111]"
+          style={{ fontFamily: '"DM Sans", Arial, sans-serif', textDecoration: "none" }}
         >
+          <PupitarLogo size={18} />
           Pupitar
         </Link>
 
