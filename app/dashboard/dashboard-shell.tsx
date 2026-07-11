@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ComponentType, FormEvent, useEffect, useRef, useState } from "react";
+import { ComponentType, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -14,9 +14,29 @@ type Repo = Pick<
   "id" | "name" | "description" | "is_public" | "created_at"
 >;
 
+type RequestLogRow = Pick<
+  Database["public"]["Tables"]["request_logs"]["Row"],
+  "repo_id" | "latency_ms" | "token_count" | "created_at" | "status"
+>;
+
+type EvalRunRow = Pick<
+  Database["public"]["Tables"]["eval_runs"]["Row"],
+  "repo_id" | "score" | "total" | "created_at"
+>;
+
+type PromptVersionRow = Pick<
+  Database["public"]["Tables"]["prompt_versions"]["Row"],
+  "repo_id" | "created_at"
+>;
+
 type DashboardShellProps = {
   repos: Repo[];
   canCreateRepos: boolean;
+  profileName?: string | null;
+  profileEmail?: string | null;
+  requestLogs?: RequestLogRow[];
+  evalRuns?: EvalRunRow[];
+  promptVersions?: PromptVersionRow[];
   initialErrorMessage?: string;
 };
 
@@ -42,6 +62,47 @@ const T = {
 function getEmailInitial(email: string | null) {
   const ch = email?.trim().charAt(0) ?? "";
   return ch ? ch.toUpperCase() : "U";
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
+function startOfUtcDay(value: string | Date) {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function isWithinRange(value: string, rangeDays: number | null) {
+  if (rangeDays == null) return true;
+  const day = startOfUtcDay(value);
+  const now = startOfUtcDay(new Date());
+  const start = new Date(now);
+  start.setUTCDate(start.getUTCDate() - (rangeDays - 1));
+  return day >= start && day <= now;
+}
+
+function timeAgo(date: string | null) {
+  if (!date) return "—";
+  return formatRelativeTime(date);
+}
+
+function getSparklinePoints(values: number[], width = 120, height = 28) {
+  if (!values.length) return "";
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const span = Math.max(max - min, 1);
+  const step = values.length > 1 ? width / (values.length - 1) : width;
+  return values
+    .map((value, index) => {
+      const x = index * step;
+      const y = height - ((value - min) / span) * height;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
 }
 
 // ─── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -136,7 +197,7 @@ function SettingsIcon() {
 
 const NAV_ITEMS = [
   { label: "Home", icon: HomeIcon, href: "/dashboard" },
-  { label: "Repos", icon: ReposIcon, href: "/dashboard/repos" },
+  { label: "Repos", icon: ReposIcon, href: "/dashboard" },
   { label: "Playground", icon: PlaygroundIcon, href: "/dashboard/playground" },
   { label: "Analytics", icon: AnalyticsIcon, href: "/dashboard/analytics" },
   { label: "Settings", icon: SettingsIcon, href: "/dashboard/settings" }
@@ -1097,32 +1158,295 @@ function NewRepoModal({
   );
 }
 
+// ─── Home dashboard UI ────────────────────────────────────────────────────────
+
+const HOME_RANGE_OPTIONS = [
+  { label: "Last 7 days", value: 7 },
+  { label: "Last month", value: 30 },
+  { label: "All time", value: null }
+] as const;
+
+function RangePill({
+  active,
+  onClick,
+  children
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        height: 34,
+        padding: "0 14px",
+        borderRadius: 999,
+        border: `1px solid ${active ? T.accent : T.line}`,
+        background: active ? T.accent : T.surface,
+        color: active ? "#fff" : T.muted,
+        fontFamily: T.dm,
+        fontSize: 14,
+        fontWeight: 500,
+        cursor: "pointer"
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  children,
+  valueColor
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  children?: React.ReactNode;
+  valueColor?: string;
+}) {
+  return (
+    <div
+      style={{
+        background: T.surface,
+        border: `1px solid ${T.line}`,
+        borderRadius: 8,
+        padding: "20px 24px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+      }}
+    >
+      <p style={{ margin: 0, fontFamily: T.dm, fontSize: 13, color: T.muted }}>{title}</p>
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: T.dm,
+          fontSize: 32,
+          fontWeight: 700,
+          lineHeight: 1,
+          color: valueColor ?? T.ink
+        }}
+      >
+        {value}
+      </div>
+      <p style={{ margin: "8px 0 0", fontFamily: T.dm, fontSize: 13, color: T.muted }}>{subtitle}</p>
+      {children && <div style={{ marginTop: 14 }}>{children}</div>}
+    </div>
+  );
+}
+
+function QuickActionCard({
+  icon,
+  title,
+  description,
+  onClick
+}: {
+  icon: string;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        padding: 20,
+        borderRadius: 8,
+        border: `1px solid ${hovered ? T.accent : T.line}`,
+        background: hovered ? T.bg : T.surface,
+        cursor: "pointer"
+      }}
+    >
+      <div style={{ fontSize: 24, lineHeight: 1, marginBottom: 10 }}>{icon}</div>
+      <div style={{ fontFamily: T.dm, fontSize: 15, fontWeight: 600, color: T.ink }}>{title}</div>
+      <p style={{ margin: "6px 0 0", fontFamily: T.dm, fontSize: 13, lineHeight: 1.5, color: T.muted }}>
+        {description}
+      </p>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18, fontFamily: T.dm, color: T.muted }}>
+        ↗
+      </div>
+    </button>
+  );
+}
+
+function RepoBadge({ isPublic }: { isPublic: boolean }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        height: 22,
+        padding: "0 8px",
+        borderRadius: 999,
+        border: `1px solid ${isPublic ? "#C7D7FF" : T.line}`,
+        background: isPublic ? "#EEF4FF" : "#F8F9FB",
+        color: isPublic ? T.accent : T.muted,
+        fontFamily: T.dm,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.04em"
+      }}
+    >
+      {isPublic ? "PUBLIC" : "PRIVATE"}
+    </span>
+  );
+}
+
+function RepoCard({
+  repo,
+  versions,
+  evals,
+  updatedAt,
+  onClick
+}: {
+  repo: Repo;
+  versions: number;
+  evals: number;
+  updatedAt: string | null;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: "100%",
+        minHeight: 162,
+        padding: 20,
+        borderRadius: 8,
+        border: `1px solid ${hovered ? T.accent : T.line}`,
+        background: T.surface,
+        cursor: "pointer",
+        textAlign: "left"
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: T.dm,
+              fontSize: 15,
+              fontWeight: 600,
+              color: T.ink,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis"
+            }}
+          >
+            {repo.name}
+          </div>
+        </div>
+        <RepoBadge isPublic={repo.is_public} />
+      </div>
+
+      <div
+        style={{
+          marginTop: 6,
+          fontFamily: T.dm,
+          fontSize: 13,
+          lineHeight: 1.5,
+          color: T.muted,
+          display: "-webkit-box",
+          WebkitLineClamp: 1,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden"
+        }}
+      >
+        {repo.description || "No description"}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 28 }}>
+        <div style={{ fontFamily: T.dm, fontSize: 12, color: "#9CA3AF" }}>
+          Updated {updatedAt ? timeAgo(updatedAt) : "—"}
+        </div>
+        <div style={{ fontFamily: T.dm, fontSize: 11, color: "#9CA3AF", whiteSpace: "nowrap" }}>
+          {versions} versions · {evals} evals
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function Sparkline({
+  values
+}: {
+  values: number[];
+}) {
+  if (!values.length) {
+    return (
+      <div style={{ marginTop: 14, fontFamily: T.dm, fontSize: 12, color: T.muted }}>
+        No data
+      </div>
+    );
+  }
+
+  return (
+    <svg width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none" style={{ marginTop: 10 }}>
+      <path d={getSparklinePoints(values)} fill="none" stroke={T.accent} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ─── Root Shell ────────────────────────────────────────────────────────────────
 
-export default function DashboardShell({ repos, canCreateRepos, initialErrorMessage }: DashboardShellProps) {
+export default function DashboardShell({
+  repos,
+  canCreateRepos,
+  profileName,
+  profileEmail,
+  requestLogs = [],
+  evalRuns = [],
+  promptVersions = [],
+  initialErrorMessage
+}: DashboardShellProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(profileEmail ?? null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+  const [range, setRange] = useState<number | null>(30);
   const router = useRouter();
 
-  // Fetch user email
   useEffect(() => {
     const supabase = createClient();
     let active = true;
 
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (active) setUserEmail(session?.user.email ?? null);
+      if (active) setUserEmail(session?.user.email ?? profileEmail ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserEmail(session?.user.email ?? null);
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserEmail(session?.user.email ?? profileEmail ?? null);
     });
 
     return () => {
       active = false;
       subscription.unsubscribe();
     };
+  }, [profileEmail]);
+
+  useEffect(() => {
+    const dismissed = window.localStorage.getItem("pupitar-dashboard-welcome-dismissed");
+    setWelcomeDismissed(dismissed === "1");
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("pupitar-dashboard-welcome-dismissed", welcomeDismissed ? "1" : "0");
+  }, [welcomeDismissed]);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -1130,14 +1454,109 @@ export default function DashboardShell({ repos, canCreateRepos, initialErrorMess
     router.push("/");
   }
 
-  // Client-side search filter
-  const filteredRepos = searchQuery.trim()
-    ? repos.filter(
-        (r) =>
-          r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (r.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : repos;
+  const repoSummaries = useMemo(() => {
+    const requestMap = new Map<string, RequestLogRow[]>();
+    const evalMap = new Map<string, EvalRunRow[]>();
+    const versionMap = new Map<string, PromptVersionRow[]>();
+
+    for (const log of requestLogs) {
+      const bucket = requestMap.get(log.repo_id) ?? [];
+      bucket.push(log);
+      requestMap.set(log.repo_id, bucket);
+    }
+
+    for (const row of evalRuns) {
+      const bucket = evalMap.get(row.repo_id) ?? [];
+      bucket.push(row);
+      evalMap.set(row.repo_id, bucket);
+    }
+
+    for (const row of promptVersions) {
+      const bucket = versionMap.get(row.repo_id) ?? [];
+      bucket.push(row);
+      versionMap.set(row.repo_id, bucket);
+    }
+
+    return repos
+      .map((repo) => {
+        const repoRequests = requestMap.get(repo.id) ?? [];
+        const repoEvals = evalMap.get(repo.id) ?? [];
+        const repoVersions = versionMap.get(repo.id) ?? [];
+        const latestRequest = repoRequests.reduce(
+          (latest, row) => (row.created_at > latest ? row.created_at : latest),
+          repo.created_at
+        );
+        const latestEval = repoEvals.reduce(
+          (latest, row) => (row.created_at > latest ? row.created_at : latest),
+          repo.created_at
+        );
+        const latestVersion = repoVersions.reduce(
+          (latest, row) => (row.created_at > latest ? row.created_at : latest),
+          repo.created_at
+        );
+        const updatedAt = [repo.created_at, latestRequest, latestEval, latestVersion].reduce(
+          (latest, current) => (current > latest ? current : latest),
+          repo.created_at
+        );
+
+        return {
+          ...repo,
+          requests: repoRequests.length,
+          versions: repoVersions.length,
+          evals: repoEvals.length,
+          updatedAt
+        };
+      })
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }, [repos, requestLogs, evalRuns, promptVersions]);
+
+  const latestActiveRepo = repoSummaries[0] ?? null;
+  const filteredRequests = useMemo(
+    () => requestLogs.filter((row) => isWithinRange(row.created_at, range)),
+    [requestLogs, range]
+  );
+  const filteredEvals = useMemo(
+    () => evalRuns.filter((row) => isWithinRange(row.created_at, range)),
+    [evalRuns, range]
+  );
+  const selectedRangeLabel = HOME_RANGE_OPTIONS.find((option) => option.value === range)?.label ?? "Last month";
+
+  const requestCountsByDay = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of filteredRequests) {
+      const day = row.created_at.slice(0, 10);
+      counts.set(day, (counts.get(day) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, count]) => count);
+  }, [filteredRequests]);
+
+  const totalRequests = filteredRequests.length;
+  const avgLatency =
+    filteredRequests.length === 0
+      ? null
+      : filteredRequests.reduce((sum, row) => sum + (row.latency_ms ?? 0), 0) / filteredRequests.length;
+  const totalScore = filteredEvals.reduce((sum, row) => sum + row.score, 0);
+  const totalCases = filteredEvals.reduce((sum, row) => sum + row.total, 0);
+  const evalPassRate = totalCases > 0 ? (totalScore / totalCases) * 100 : null;
+  const tokenTotal = filteredRequests.reduce((sum, row) => sum + (row.token_count ?? 0), 0);
+  const tokenAvg = filteredRequests.length > 0 ? tokenTotal / filteredRequests.length : null;
+
+  const displayName = profileName?.trim() || userEmail || "Account";
+  const visibleRepos = repoSummaries.slice(0, 4);
+
+  function openMostActiveRepoEvaluations() {
+    if (!latestActiveRepo) {
+      router.push("/dashboard");
+      return;
+    }
+    router.push(`/dashboard/${latestActiveRepo.id}#evals`);
+  }
+
+  function openRepo(repoId: string) {
+    router.push(`/dashboard/${repoId}`);
+  }
 
   return (
     <div
@@ -1148,52 +1567,249 @@ export default function DashboardShell({ repos, canCreateRepos, initialErrorMess
         overflow: "hidden"
       }}
     >
-      {/* Sidebar */}
       <Sidebar userEmail={userEmail} onSignOut={handleSignOut} />
 
-      {/* Main content */}
       <main
         style={{
           flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          minWidth: 0
+          minWidth: 0,
+          height: "100vh",
+          overflowY: "auto"
         }}
       >
-        {/* Top bar */}
-        <MainTopBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onNewRepo={() => setIsModalOpen(true)}
-          canCreateRepos={canCreateRepos}
-        />
+        <div style={{ padding: "24px" }}>
+          <div style={{ maxWidth: 1280 }}>
+            {initialErrorMessage && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: "12px 14px",
+                  borderRadius: 8,
+                  border: `1px solid ${T.line}`,
+                  background: T.surface,
+                  color: T.muted,
+                  fontFamily: T.dm,
+                  fontSize: 13
+                }}
+              >
+                {initialErrorMessage}
+              </div>
+            )}
 
-        {/* Content */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "24px"
-          }}
-        >
-          {filteredRepos.length === 0 ? (
-            <EmptyState
-              onNewRepo={() => setIsModalOpen(true)}
-              canCreateRepos={canCreateRepos}
-              errorMessage={
-                searchQuery.trim()
-                  ? `No repos match "${searchQuery}".`
-                  : initialErrorMessage
-              }
-            />
-          ) : (
-            <RepoList repos={filteredRepos} />
-          )}
+            {!welcomeDismissed && (
+              <section
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  border: `1px solid ${T.line}`,
+                  borderRadius: 12,
+                  background: T.surface,
+                  padding: "32px 40px",
+                  marginBottom: 24
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setWelcomeDismissed(true)}
+                  aria-label="Dismiss welcome card"
+                  style={{
+                    position: "absolute",
+                    top: 18,
+                    right: 20,
+                    border: "none",
+                    background: "transparent",
+                    color: T.muted,
+                    fontFamily: T.dm,
+                    fontSize: 22,
+                    cursor: "pointer",
+                    lineHeight: 1
+                  }}
+                >
+                  ×
+                </button>
+
+                <div style={{ maxWidth: 720 }}>
+                  <p style={{ margin: 0, fontFamily: T.dm, fontSize: 16, fontWeight: 400, color: T.muted }}>
+                    Welcome back,
+                  </p>
+                  <h1 style={{ margin: "6px 0 0", fontFamily: T.dm, fontSize: 28, fontWeight: 700, color: T.ink }}>
+                    {displayName}
+                  </h1>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                    gap: 16,
+                    marginTop: 24
+                  }}
+                >
+                  <QuickActionCard
+                    icon="✏️"
+                    title="Create a prompt"
+                    description="Start with a prompt and test it in the playground"
+                    onClick={() => setIsModalOpen(true)}
+                  />
+                  <QuickActionCard
+                    icon="🧪"
+                    title="Run an evaluation"
+                    description="Measure quality on your prompt and compare versions"
+                    onClick={openMostActiveRepoEvaluations}
+                  />
+                  <QuickActionCard
+                    icon="📊"
+                    title="View analytics"
+                    description="See request volume, latency, and eval pass rates"
+                    onClick={() => router.push("/dashboard/analytics")}
+                  />
+                  <QuickActionCard
+                    icon="🔬"
+                    title="Go to playground"
+                    description="Experiment with prompts and compare models side by side"
+                    onClick={() => router.push("/dashboard/playground")}
+                  />
+                </div>
+              </section>
+            )}
+
+            <section style={{ paddingTop: 24, borderTop: `1px solid ${T.line}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+                <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>Stats</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {HOME_RANGE_OPTIONS.map((option) => (
+                    <RangePill
+                      key={String(option.label)}
+                      active={range === option.value}
+                      onClick={() => setRange(option.value)}
+                    >
+                      {option.label}
+                    </RangePill>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                  gap: 16
+                }}
+              >
+                <StatCard title="Requests" value={formatCompactNumber(totalRequests)} subtitle={`Total in ${selectedRangeLabel.toLowerCase()}`}>
+                  <Sparkline values={requestCountsByDay} />
+                </StatCard>
+                <StatCard title="Latency" value={avgLatency == null ? "—" : `${Math.round(avgLatency)} ms`} subtitle="Avg response time" />
+                <StatCard
+                  title="Eval Pass Rate"
+                  value={evalPassRate == null ? "—" : `${Math.round(evalPassRate)}%`}
+                  subtitle="Across eval runs"
+                  valueColor={T.success}
+                />
+                <StatCard
+                  title="Tokens"
+                  value={filteredRequests.length === 0 ? "—" : formatCompactNumber(tokenTotal)}
+                  subtitle={tokenAvg == null ? "Avg per request" : `Avg: ${Math.round(tokenAvg)} per request`}
+                />
+              </div>
+            </section>
+
+            <section style={{ paddingTop: 24, marginTop: 24, borderTop: `1px solid ${T.line}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+                <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>Your Repos</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: T.accent,
+                      fontFamily: T.dm,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: 0
+                    }}
+                  >
+                    + New repo
+                  </button>
+                  <Link
+                    href="/dashboard"
+                    style={{
+                      fontFamily: T.dm,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: T.muted
+                    }}
+                  >
+                    View all →
+                  </Link>
+                </div>
+              </div>
+
+              {visibleRepos.length === 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    placeItems: "center",
+                    minHeight: 320,
+                    border: `1px solid ${T.line}`,
+                    borderRadius: 8,
+                    background: T.surface
+                  }}
+                >
+                  <div style={{ textAlign: "center", maxWidth: 360, padding: 24 }}>
+                    <div style={{ fontSize: 36, marginBottom: 12 }}>📝</div>
+                    <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>No repos yet.</div>
+                    <p style={{ margin: "10px 0 18px", fontFamily: T.dm, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
+                      Create your first prompt repo to get started.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(true)}
+                      style={{
+                        height: 38,
+                        padding: "0 16px",
+                        border: "none",
+                        borderRadius: 6,
+                        background: T.accent,
+                        color: "#fff",
+                        fontFamily: T.dm,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      + Create repo
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 16
+                  }}
+                >
+                  {visibleRepos.map((repo) => (
+                    <RepoCard
+                      key={repo.id}
+                      repo={repo}
+                      versions={repo.versions}
+                      evals={repo.evals}
+                      updatedAt={repo.updatedAt}
+                      onClick={() => openRepo(repo.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </main>
 
-      {/* Modal */}
       <NewRepoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
