@@ -216,6 +216,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      request_logs: {
+        Row: {
+          id: string;
+          repo_id: string;
+          latency_ms: number | null;
+          token_count: number | null;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          status: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          repo_id: string;
+          latency_ms?: number | null;
+          token_count?: number | null;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          status?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          repo_id?: string;
+          latency_ms?: number | null;
+          token_count?: number | null;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          status?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

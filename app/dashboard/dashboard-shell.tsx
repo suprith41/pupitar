@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ComponentType, FormEvent, useEffect, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -44,17 +44,105 @@ function getEmailInitial(email: string | null) {
   return ch ? ch.toUpperCase() : "U";
 }
 
+// ─── SVG Icons ─────────────────────────────────────────────────────────────────
+
+function HomeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <path d="M3.5 8.5v7a1.5 1.5 0 001.5 1.5h10a1.5 1.5 0 001.5-1.5v-7M2 9.5l7.3-6a1 1 0 011.4 0l7.3 6M7.5 17v-4.5a1 1 0 011-1h3a1 1 0 011 1V17" />
+    </svg>
+  );
+}
+
+function ReposIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <path d="M2.5 5.5a1.5 1.5 0 011.5-1.5h3.3a1.5 1.5 0 011.1.5l1.2 1.5H16a1.5 1.5 0 011.5 1.5v7a1.5 1.5 0 01-1.5 1.5H4a1.5 1.5 0 01-1.5-1.5v-9z" />
+    </svg>
+  );
+}
+
+function PlaygroundIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <path d="M7.5 2.5h5M7.5 2.5v5L3.4 15.6A1.5 1.5 0 004.7 17.5h10.6a1.5 1.5 0 001.3-1.9L12.5 7.5V2.5M5.5 13.5h9" />
+    </svg>
+  );
+}
+
+function AnalyticsIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <path d="M15.5 16.5V9.5m-5.5 7V3.5m-5.5 13v-6" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <path d="M8.7 2.7h2.6l.4 1.9c.3.1.7.3 1 .5l1.8-1 1.8 1.8-1 1.8c.2.3.4.7.5 1l1.9.4v2.6l-1.9.4c-.1.3-.3.7-.5 1l1 1.8-1.8 1.8-1.8-1c-.3.2-.7.4-1 .5l-.4 1.9H8.7l-.4-1.9c-.3-.1-.7-.3-1-.5l-1.8 1-1.8-1.8 1-1.8c-.2-.3-.4-.7-.5-1l-1.9-.4V8.7l1.9-.4c.1-.3.3-.7.5-1l-1-1.8 1.8-1.8 1.8 1c.3-.2.7-.4 1-.5l.4-1.9z" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
 // ─── Sidebar nav item ──────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { label: "Home", emoji: "🏠", href: "/dashboard" },
-  { label: "Repos", emoji: "📁", href: "/dashboard/repos" },
-  { label: "Playground", emoji: "🔬", href: "/dashboard/playground" },
-  { label: "Analytics", emoji: "📊", href: "/dashboard/analytics" },
-  { label: "Settings", emoji: "⚙️", href: "/dashboard/settings" }
-] as const;
+  { label: "Home", icon: HomeIcon, href: "/dashboard" },
+  { label: "Repos", icon: ReposIcon, href: "/dashboard/repos" },
+  { label: "Playground", icon: PlaygroundIcon, href: "/dashboard/playground" },
+  { label: "Analytics", icon: AnalyticsIcon, href: "/dashboard/analytics" },
+  { label: "Settings", icon: SettingsIcon, href: "/dashboard/settings" }
+];
 
-function NavItem({ label, emoji, href }: { label: string; emoji: string; href: string }) {
+function NavItem({ label, icon: Icon, href }: { label: string; icon: ComponentType; href: string }) {
   const pathname = usePathname();
   // Home is active when exactly on /dashboard; others match prefix
   const isActive =
@@ -86,7 +174,9 @@ function NavItem({ label, emoji, href }: { label: string; emoji: string; href: s
         textOverflow: "ellipsis"
       }}
     >
-      <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
+      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, flexShrink: 0 }}>
+        <Icon />
+      </span>
       {label}
     </Link>
   );
