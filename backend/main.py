@@ -211,21 +211,32 @@ def run_eval_case(version: dict[str, Any], eval_case: dict[str, Any]) -> dict[st
 
 
 @app.post("/api/playground")
-def run_playground(payload: PlaygroundRequest) -> dict[str, str]:
+def run_playground(payload: PlaygroundRequest) -> dict[str, Any]:
     try:
         client = get_groq_client()
-        response = call_groq_completion(
-            client,
-            system=payload.prompt,
-            user=payload.test_message,
+        completion = client.chat.completions.create(
             model=payload.model,
+            messages=[
+                {"role": "system", "content": payload.prompt},
+                {"role": "user", "content": payload.test_message},
+            ],
             temperature=payload.temperature,
             max_tokens=payload.max_tokens,
         )
+        response = completion.choices[0].message.content or ""
+        usage = getattr(completion, "usage", None)
+        output_tokens = getattr(usage, "completion_tokens", None) if usage else None
+        prompt_tokens = getattr(usage, "prompt_tokens", None) if usage else None
+        total_tokens = getattr(usage, "total_tokens", None) if usage else None
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return {"response": response}
+    return {
+        "response": response,
+        "output_tokens": output_tokens or 0,
+        "prompt_tokens": prompt_tokens or 0,
+        "total_tokens": total_tokens or output_tokens or 0,
+    }
 
 
 @app.post("/api/deploy")

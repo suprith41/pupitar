@@ -94,7 +94,7 @@ function NavItem({ label, emoji, href }: { label: string; emoji: string; href: s
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-function Sidebar({
+export function Sidebar({
   userEmail,
   onSignOut
 }: {
