@@ -45,6 +45,109 @@ body {
   opacity: 1;
 }
 
+.pupitar-dashboard {
+  color-scheme: dark;
+  background: #0f0f0f;
+  color: #f0f0f0;
+}
+
+.pupitar-dashboard ::selection {
+  background: #1a2a4a;
+  color: #f0f0f0;
+}
+
+.pupitar-dashboard input::placeholder,
+.pupitar-dashboard textarea::placeholder,
+.pupitar-dashboard select::placeholder {
+  color: #606060;
+}
+
+.pupitar-dashboard ::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+
+.pupitar-dashboard ::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+}
+
+.pupitar-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+.pupitar-dashboard .bg-bg {
+  background-color: #0f0f0f !important;
+}
+
+.pupitar-dashboard .bg-surface,
+.pupitar-dashboard .bg-panel,
+.pupitar-dashboard .bg-white,
+.pupitar-dashboard .bg-nav {
+  background-color: #1a1a1a !important;
+}
+
+.pupitar-dashboard .bg-accent {
+  background-color: #2067ff !important;
+}
+
+.pupitar-dashboard .bg-accent-hover {
+  background-color: #2f6bff !important;
+}
+
+.pupitar-dashboard .bg-\\[\\#FCFBF7\\],
+.pupitar-dashboard .bg-\\[\\#F9FAFB\\],
+.pupitar-dashboard .bg-\\[\\#F5F5F5\\],
+.pupitar-dashboard .bg-\\[\\#FFFFFF\\] {
+  background-color: #0f0f0f !important;
+}
+
+.pupitar-dashboard .text-ink {
+  color: #f0f0f0 !important;
+}
+
+.pupitar-dashboard .text-muted {
+  color: #a0a0a0 !important;
+}
+
+.pupitar-dashboard .text-line {
+  color: #606060 !important;
+}
+
+.pupitar-dashboard .text-accent {
+  color: #2067ff !important;
+}
+
+.pupitar-dashboard .text-success {
+  color: #4caf82 !important;
+}
+
+.pupitar-dashboard .text-error {
+  color: #f87171 !important;
+}
+
+.pupitar-dashboard .border-line {
+  border-color: #2a2a2a !important;
+}
+
+.pupitar-dashboard .border-accent {
+  border-color: #2067ff !important;
+}
+
+.pupitar-dashboard .shadow-zf,
+.pupitar-dashboard .shadow-subtle,
+.pupitar-dashboard .shadow-card,
+.pupitar-dashboard .shadow-elevated,
+.pupitar-dashboard .shadow-blue {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.pupitar-dashboard input:focus-visible,
+.pupitar-dashboard textarea:focus-visible,
+.pupitar-dashboard select:focus-visible {
+  outline: 2px solid #2067ff;
+  outline-offset: 2px;
+  box-shadow: none !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;

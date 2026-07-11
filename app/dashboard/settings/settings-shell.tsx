@@ -33,16 +33,17 @@ type SettingsShellProps = {
 };
 
 const T = {
-  bg: "#FCFBF7",
-  surface: "#FFFFFF",
-  ink: "#000000",
-  muted: "#706E6E",
-  line: "#E1E4EA",
+  bg: "#0F0F0F",
+  surface: "#1A1A1A",
+  ink: "#F0F0F0",
+  muted: "#A0A0A0",
+  line: "#2A2A2A",
   danger: "#B42318",
-  dangerBg: "#FEF2F2",
+  dangerBg: "#2A0F0F",
   accent: "#2067FF",
   accentHover: "#2F6BFF",
-  success: "#1D7F4D",
+  success: "#4CAF82",
+  lineSoft: "#242424",
   dm: '"DM Sans", Arial, sans-serif',
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace'
 } as const;
@@ -165,15 +166,15 @@ function Button({
 }) {
   const [hovered, setHovered] = useState(false);
   const styles =
-    kind === "danger"
+        kind === "danger"
       ? {
-          background: hovered ? "#A61B12" : T.danger,
+          background: T.danger,
           color: "#fff",
           border: "none"
         }
       : kind === "ghost"
         ? {
-            background: hovered ? "#F6F8FC" : T.surface,
+            background: hovered ? T.lineSoft : T.surface,
             color: T.ink,
             border: `1px solid ${T.line}`
           }
@@ -244,7 +245,7 @@ function Modal({
           background: T.surface,
           borderRadius: 12,
           padding: 28,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)"
+          boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>

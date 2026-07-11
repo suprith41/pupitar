@@ -44,17 +44,17 @@ type DashboardShellProps = {
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg: "#FCFBF7",
-  surface: "#FFFFFF",
-  ink: "#000000",
-  muted: "#706E6E",
-  line: "#E1E4EA",
+  bg: "#0F0F0F",
+  surface: "#1A1A1A",
+  ink: "#F0F0F0",
+  muted: "#A0A0A0",
+  line: "#2A2A2A",
   accent: "#2067FF",
   accentHover: "#2F6BFF",
-  accentLight: "#EEF4FF",
-  hover: "#F5F5F5",
-  error: "#B42318",
-  success: "#1D7F4D",
+  accentLight: "#1A2A4A",
+  hover: "#242424",
+  error: "#F87171",
+  success: "#4CAF82",
   dm: '"DM Sans", Arial, sans-serif'
 } as const;
 
@@ -223,6 +223,7 @@ function NavItem({ label, icon: Icon, href }: { label: string; icon: ComponentTy
         height: 36,
         padding: "0 12px",
         margin: "2px 8px",
+        borderLeft: isActive ? `2px solid ${T.accent}` : "2px solid transparent",
         borderRadius: 6,
         textDecoration: "none",
         fontFamily: T.dm,
@@ -387,7 +388,7 @@ export function Sidebar({
               padding: "8px 6px",
               borderRadius: 6,
               border: "none",
-              background: menuHovered ? T.hover : "transparent",
+              background: menuHovered ? T.hover : T.bg,
               cursor: "pointer",
               transition: "background 150ms ease",
               textAlign: "left"
@@ -559,7 +560,7 @@ function MainTopBar({
           style={{
             height: 36,
             padding: "0 14px",
-            background: !canCreateRepos ? "#A0B8FF" : btnHovered ? T.accentHover : T.accent,
+            background: !canCreateRepos ? T.accentLight : btnHovered ? T.accentHover : T.accent,
             color: "#fff",
             border: "none",
             borderRadius: 6,
@@ -599,7 +600,7 @@ function RepoRow({ repo, isFirst }: { repo: Repo; isFirst: boolean }) {
         justifyContent: "space-between",
         gap: 16,
         padding: "16px 20px",
-        background: hovered ? "#FAFAFA" : T.surface,
+        background: hovered ? T.hover : T.surface,
         borderTop: isFirst ? "none" : `1px solid ${T.line}`,
         cursor: "pointer",
         transition: "background 120ms ease"
@@ -773,7 +774,7 @@ function EmptyState({
         onMouseLeave={() => setBtnHovered(false)}
         style={{
           padding: "10px 20px",
-          background: !canCreateRepos ? "#A0B8FF" : btnHovered ? T.accentHover : T.accent,
+        background: !canCreateRepos ? T.accentLight : btnHovered ? T.accentHover : T.accent,
           color: "#fff",
           border: "none",
           borderRadius: 6,
@@ -1115,12 +1116,12 @@ export function NewRepoModal({
             style={{
               width: "100%",
               padding: "13px",
-              background:
-                isSubmitting || !canCreateRepos
-                  ? "#A0B8FF"
-                  : submitHovered
-                  ? T.accentHover
-                  : T.accent,
+                background:
+                  isSubmitting || !canCreateRepos
+                    ? T.accentLight
+                    : submitHovered
+                    ? T.accentHover
+                    : T.accent,
               color: "#fff",
               border: "none",
               borderRadius: 6,
@@ -1250,7 +1251,7 @@ function QuickPencilIcon() {
       aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#D97706"
+      stroke={T.accent}
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -1267,7 +1268,7 @@ function QuickTestTubeIcon() {
       aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#1D7F4D"
+      stroke={T.success}
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -1304,7 +1305,7 @@ function QuickScienceIcon() {
       aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#7C3AED"
+      stroke={T.muted}
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -1367,8 +1368,8 @@ function RepoBadge({ isPublic }: { isPublic: boolean }) {
         height: 22,
         padding: "0 8px",
         borderRadius: 999,
-        border: `1px solid ${isPublic ? "#C7D7FF" : T.line}`,
-        background: isPublic ? "#EEF4FF" : "#F8F9FB",
+        border: `1px solid ${isPublic ? T.accent : T.line}`,
+        background: isPublic ? T.accentLight : T.hover,
         color: isPublic ? T.accent : T.muted,
         fontFamily: T.dm,
         fontSize: 11,
@@ -1449,10 +1450,10 @@ function RepoCard({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 28 }}>
-        <div style={{ fontFamily: T.dm, fontSize: 12, color: "#9CA3AF" }}>
+        <div style={{ fontFamily: T.dm, fontSize: 12, color: T.muted }}>
           Updated {updatedAt ? timeAgo(updatedAt) : "—"}
         </div>
-        <div style={{ fontFamily: T.dm, fontSize: 11, color: "#9CA3AF", whiteSpace: "nowrap" }}>
+        <div style={{ fontFamily: T.dm, fontSize: 11, color: T.muted, whiteSpace: "nowrap" }}>
           {versions} versions · {evals} evals
         </div>
       </div>

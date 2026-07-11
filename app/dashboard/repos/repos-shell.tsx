@@ -30,23 +30,23 @@ type ReposShellProps = {
 };
 
 const T = {
-  bg: "#FCFBF7",
-  surface: "#FFFFFF",
-  ink: "#000000",
-  muted: "#706E6E",
-  subtlest: "#9CA3AF",
-  line: "#E1E4EA",
+  bg: "#0F0F0F",
+  surface: "#1A1A1A",
+  ink: "#F0F0F0",
+  muted: "#A0A0A0",
+  subtlest: "#606060",
+  line: "#2A2A2A",
   accent: "#2067FF",
   accentHover: "#2F6BFF",
-  accentLight: "#EEF4FF",
-  hover: "#FCFBF7",
-  chip: "#F5F5F5",
+  accentLight: "#1A2A4A",
+  hover: "#242424",
+  chip: "#242424",
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace',
   dm: '"DM Sans", Arial, sans-serif'
 } as const;
 
 const VIEW_STORAGE_KEY = "pupitar-repos-view";
-const ICON_COLORS = ["#2067FF", "#1D7F4D", "#B42318", "#706E6E", "#9333EA"] as const;
+const ICON_COLORS = ["#2067FF", "#4CAF82", "#F87171", "#606060", "#2F6BFF"] as const;
 
 function truncatePreview(value: string) {
   const trimmed = value.trim();
@@ -175,12 +175,12 @@ function FieldButton({
   const styles: CSSProperties =
     kind === "ghost"
       ? {
-          background: hovered ? "#F6F8FC" : T.surface,
+        background: hovered ? T.hover : T.surface,
           color: T.ink,
           border: `1px solid ${T.line}`
         }
       : {
-          background: disabled ? "#A0B8FF" : hovered ? T.accentHover : T.accent,
+          background: disabled ? T.accentLight : hovered ? T.accentHover : T.accent,
           color: "#fff",
           border: "none"
         };
@@ -380,7 +380,8 @@ function RepoGridCard({
         <div
           style={{
             borderRadius: 4,
-            background: "#F9FAFB",
+            background: "#0F0F0F",
+            border: `1px solid ${T.line}`,
             padding: "8px 12px",
             fontFamily: T.mono,
             fontSize: 11,

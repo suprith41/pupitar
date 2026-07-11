@@ -1219,7 +1219,7 @@ export default function RepoEditorShell({
                     <div
                       key={version.id}
                       className={`border-b border-line last:border-b-0 ${
-                        isCurrent ? "bg-[#EEF4FF] border-l-[3px] border-l-accent" : ""
+                        isCurrent ? "bg-accent/10 border-l-[3px] border-l-accent" : ""
                       }`}
                     >
                       <button
@@ -1229,7 +1229,7 @@ export default function RepoEditorShell({
                       >
                         <span
                           className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                            isCurrent ? "border-accent" : "border-[#B8C1D1]"
+                            isCurrent ? "border-accent" : "border-line"
                           }`}
                           aria-hidden="true"
                         >
@@ -1642,8 +1642,8 @@ export default function RepoEditorShell({
                               <span
                                 className={`rounded-sm border px-2 py-1 font-mono text-[11px] ${
                                   result.passed
-                                    ? "border-[#1a3a1a] text-[#4caf50]"
-                                    : "border-[#3a1a1a] text-error"
+                                    ? "border-[#0F2A1A] text-[#4CAF82]"
+                                    : "border-[#2A0F0F] text-error"
                                 }`}
                               >
                                 {result.verdict}
@@ -2229,7 +2229,7 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
   if (row.kind === "delete") {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-        <div className={`${rowClasses} bg-[#FEF2F2] text-error`}>
+        <div className={`${rowClasses} bg-[#2A0F0F] text-[#F87171]`}>
           <span className="mr-2 text-error">-</span>
           <span>{row.oldLine || " "}</span>
         </div>
@@ -2242,7 +2242,7 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
         <div className={rowClasses} />
-        <div className={`${rowClasses} bg-[#F0FDF4] text-success`}>
+        <div className={`${rowClasses} bg-[#0F2A1A] text-[#4CAF82]`}>
           <span className="mr-2 text-success">+</span>
           <span>{row.newLine || " "}</span>
         </div>
@@ -2252,11 +2252,11 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
 
   return (
     <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-      <div className={`${rowClasses} bg-[#FEF2F2] text-error`}>
+      <div className={`${rowClasses} bg-[#2A0F0F] text-[#F87171]`}>
         <span className="mr-2 text-error">-</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="old" />
       </div>
-      <div className={`${rowClasses} bg-[#F0FDF4] text-success`}>
+      <div className={`${rowClasses} bg-[#0F2A1A] text-[#4CAF82]`}>
         <span className="mr-2 text-success">+</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="new" />
       </div>
@@ -2291,7 +2291,7 @@ function InlineDiffText({
             return (
               <span
                 key={index}
-                className="rounded-sm bg-[#FEF2F2] px-0.5 text-red-50"
+                className="rounded-sm bg-[#2A0F0F] px-0.5 text-[#F87171]"
               >
                 {text}
               </span>
@@ -2309,7 +2309,7 @@ function InlineDiffText({
           return (
             <span
               key={index}
-              className="rounded-sm bg-[#F0FDF4] px-0.5 text-green-50"
+              className="rounded-sm bg-[#0F2A1A] px-0.5 text-[#4CAF82]"
             >
               {text}
             </span>

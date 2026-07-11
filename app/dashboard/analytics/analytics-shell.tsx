@@ -47,15 +47,15 @@ type AnalyticsShellProps = {
 };
 
 const T = {
-  bg: "#FCFBF7",
-  surface: "#FFFFFF",
-  ink: "#000000",
-  muted: "#706E6E",
-  line: "#E1E4EA",
-  lineSoft: "#F9FAFB",
+  bg: "#0F0F0F",
+  surface: "#1A1A1A",
+  ink: "#F0F0F0",
+  muted: "#A0A0A0",
+  line: "#2A2A2A",
+  lineSoft: "#242424",
   accent: "#2067FF",
   accentHover: "#2F6BFF",
-  success: "#1D7F4D",
+  success: "#4CAF82",
   dm: '"DM Sans", Arial, sans-serif',
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace'
 } as const;
@@ -100,7 +100,7 @@ function StatCard({
         border: `1px solid ${T.line}`,
         borderRadius: 8,
         padding: "20px 24px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+        boxShadow: "0 1px 3px rgba(0,0,0,0.4)"
       }}
     >
       <p style={{ margin: 0, fontFamily: T.dm, fontSize: 13, color: T.muted }}>{label}</p>
@@ -164,7 +164,7 @@ function EmptyState() {
         minHeight: 520,
         border: `1px dashed ${T.line}`,
         borderRadius: 12,
-        background: "linear-gradient(180deg, #FFFFFF 0%, #FCFBF7 100%)"
+        background: T.bg
       }}
     >
       <div style={{ textAlign: "center", maxWidth: 520, padding: 24 }}>
@@ -228,7 +228,7 @@ function MetricBadge({ children }: { children: string }) {
         height: 24,
         padding: "0 8px",
         borderRadius: 999,
-        background: "#F3F6FA",
+        background: T.lineSoft,
         color: T.muted,
         fontFamily: T.dm,
         fontSize: 12,
@@ -418,14 +418,25 @@ export default function AnalyticsShell({ canCreateRepos: _canCreateRepos, data }
                   <ChartFrame height={320}>
                     <ResponsiveContainer>
                       <LineChart data={data.requestCountSeries} margin={{ top: 12, right: 18, bottom: 28, left: 44 }}>
-                        <CartesianGrid stroke="#E1E4EA" />
+                        <CartesianGrid stroke={T.line} />
                         <XAxis
                           dataKey="label"
                           tick={{ fill: T.muted, fontSize: 11 }}
                           tickFormatter={(value) => String(value)}
                         />
                         <YAxis tick={{ fill: T.muted, fontSize: 11 }} tickCount={5} />
-                        <Tooltip />
+                        <Tooltip
+                          {...({
+                            contentStyle: {
+                              background: T.surface,
+                              border: `1px solid ${T.line}`,
+                              borderRadius: 8,
+                              color: T.ink
+                            },
+                            labelStyle: { color: T.muted },
+                            itemStyle: { color: T.ink }
+                          } as any)}
+                        />
                         <Line dataKey="count" stroke={T.accent} strokeWidth={2.5} dot />
                       </LineChart>
                     </ResponsiveContainer>
@@ -437,14 +448,25 @@ export default function AnalyticsShell({ canCreateRepos: _canCreateRepos, data }
                     <ChartFrame height={280}>
                       <ResponsiveContainer>
                         <LineChart data={data.latencySeries} margin={{ top: 12, right: 18, bottom: 28, left: 44 }}>
-                          <CartesianGrid stroke="#E1E4EA" />
+                          <CartesianGrid stroke={T.line} />
                           <XAxis
                             dataKey="label"
                             tick={{ fill: T.muted, fontSize: 11 }}
                             tickFormatter={(value) => String(value)}
                           />
                           <YAxis tick={{ fill: T.muted, fontSize: 11 }} tickCount={5} tickFormatter={(value) => `${Math.round(Number(value))}`} />
-                          <Tooltip />
+                          <Tooltip
+                            {...({
+                              contentStyle: {
+                                background: T.surface,
+                                border: `1px solid ${T.line}`,
+                                borderRadius: 8,
+                                color: T.ink
+                              },
+                              labelStyle: { color: T.muted },
+                              itemStyle: { color: T.ink }
+                            } as any)}
+                          />
                           <Line dataKey="latency" stroke={T.muted} strokeWidth={2.5} dot />
                         </LineChart>
                       </ResponsiveContainer>
@@ -455,14 +477,25 @@ export default function AnalyticsShell({ canCreateRepos: _canCreateRepos, data }
                     <ChartFrame height={280}>
                       <ResponsiveContainer>
                         <BarChart data={data.evalScoresByRepo} margin={{ top: 12, right: 18, bottom: 28, left: 44 }}>
-                          <CartesianGrid stroke="#E1E4EA" />
+                          <CartesianGrid stroke={T.line} />
                           <XAxis
                             dataKey="name"
                             tick={{ fill: T.muted, fontSize: 11 }}
                             tickFormatter={(value) => String(value).slice(0, 10)}
                           />
                           <YAxis tick={{ fill: T.muted, fontSize: 11 }} tickCount={5} tickFormatter={(value) => `${Math.round(Number(value))}`} />
-                          <Tooltip />
+                          <Tooltip
+                            {...({
+                              contentStyle: {
+                                background: T.surface,
+                                border: `1px solid ${T.line}`,
+                                borderRadius: 8,
+                                color: T.ink
+                              },
+                              labelStyle: { color: T.muted },
+                              itemStyle: { color: T.ink }
+                            } as any)}
+                          />
                           <Bar dataKey="value" fill={T.accent} radius={4} />
                         </BarChart>
                       </ResponsiveContainer>
