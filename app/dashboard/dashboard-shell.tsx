@@ -1244,13 +1244,85 @@ function StatCard({
   );
 }
 
+function QuickPencilIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#D97706"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 24, height: 24 }}
+    >
+      <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function QuickTestTubeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#1D7F4D"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 24, height: 24 }}
+    >
+      <path d="M16 2H8M14 2v13.5a2.5 2.5 0 11-4 0V2" />
+      <path d="M10 6h4M10 10h4" />
+    </svg>
+  );
+}
+
+function QuickBarChartIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#2067FF"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 24, height: 24 }}
+    >
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function QuickScienceIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#7C3AED"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 24, height: 24 }}
+    >
+      <path d="M6 3h12" />
+      <path d="M10 3v5c0 .5-.2 1-.6 1.4L4.3 15.6c-.6.7-.3 1.8.6 1.8h14.2c.9 0 1.2-1.1.6-1.8L14.6 9.4c-.4-.4-.6-.9-.6-1.4V3" />
+    </svg>
+  );
+}
+
 function QuickActionCard({
-  icon,
+  icon: Icon,
   title,
   description,
   onClick
 }: {
-  icon: string;
+  icon: ComponentType;
   title: string;
   description: string;
   onClick: () => void;
@@ -1272,7 +1344,9 @@ function QuickActionCard({
         cursor: "pointer"
       }}
     >
-      <div style={{ fontSize: 24, lineHeight: 1, marginBottom: 10 }}>{icon}</div>
+      <div style={{ display: "flex", alignItems: "center", height: 24, marginBottom: 10 }}>
+        <Icon />
+      </div>
       <div style={{ fontFamily: T.dm, fontSize: 15, fontWeight: 600, color: T.ink }}>{title}</div>
       <p style={{ margin: "6px 0 0", fontFamily: T.dm, fontSize: 13, lineHeight: 1.5, color: T.muted }}>
         {description}
@@ -1613,26 +1687,6 @@ export default function DashboardShell({
                   marginBottom: 24
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => setWelcomeDismissed(true)}
-                  aria-label="Dismiss welcome card"
-                  style={{
-                    position: "absolute",
-                    top: 18,
-                    right: 20,
-                    border: "none",
-                    background: "transparent",
-                    color: T.muted,
-                    fontFamily: T.dm,
-                    fontSize: 22,
-                    cursor: "pointer",
-                    lineHeight: 1
-                  }}
-                >
-                  ×
-                </button>
-
                 <div style={{ maxWidth: 720 }}>
                   <p style={{ margin: 0, fontFamily: T.dm, fontSize: 16, fontWeight: 400, color: T.muted }}>
                     Welcome back,
@@ -1651,25 +1705,25 @@ export default function DashboardShell({
                   }}
                 >
                   <QuickActionCard
-                    icon="✏️"
+                    icon={QuickPencilIcon}
                     title="Create a prompt"
                     description="Start with a prompt and test it in the playground"
                     onClick={() => setIsModalOpen(true)}
                   />
                   <QuickActionCard
-                    icon="🧪"
+                    icon={QuickTestTubeIcon}
                     title="Run an evaluation"
                     description="Measure quality on your prompt and compare versions"
                     onClick={openMostActiveRepoEvaluations}
                   />
                   <QuickActionCard
-                    icon="📊"
+                    icon={QuickBarChartIcon}
                     title="View analytics"
                     description="See request volume, latency, and eval pass rates"
                     onClick={() => router.push("/dashboard/analytics")}
                   />
                   <QuickActionCard
-                    icon="🔬"
+                    icon={QuickScienceIcon}
                     title="Go to playground"
                     description="Experiment with prompts and compare models side by side"
                     onClick={() => router.push("/dashboard/playground")}
