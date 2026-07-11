@@ -3,7 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Pupitar",
-  description: "Version control for AI prompts and evals"
+  description: "Version control for AI prompts and evals",
+  icons: {
+    icon: "/favicon.ico"
+  }
 };
 
 export default function RootLayout({
