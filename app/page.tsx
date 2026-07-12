@@ -149,21 +149,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-bg text-ink">
-      <div className="relative min-h-[92vh] flex flex-col justify-between">
+      <div className="relative min-h-screen flex flex-col justify-between">
         {/* Background Image Layer with isolated filters */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
           style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             backgroundImage: "url('/background.jpg')",
-            filter: "brightness(1.28) contrast(1.02)"
-          }}
-        />
-
-        {/* Gradient overlay to ensure text legibility and fade to the solid #FCFBF7 background */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "linear-gradient(to bottom, rgba(252, 251, 247, 0.05) 0%, rgba(252, 251, 247,0.1) 60%, #FCFBF7 100%)"
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            width: "100%",
+            height: "100%"
           }}
         />
 

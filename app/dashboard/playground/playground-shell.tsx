@@ -323,7 +323,7 @@ function PlaygroundPanel({
             }}
           >
             {MODEL_OPTIONS.map((option) => (
-              <option key={option} value={option}>
+              <option key={option} value={option} style={{ background: T.surface, color: T.ink }}>
                 {option}
               </option>
             ))}
@@ -485,7 +485,7 @@ function PlaygroundPanel({
               height: 36,
               padding: "0 24px",
               background: variant.isRunning ? T.surface : T.ink,
-              color: "#fff",
+              color: variant.isRunning ? T.ink : T.bg,
               border: "none",
               borderRadius: 6,
               fontFamily: T.dm,
@@ -731,6 +731,7 @@ function SaveRepoModal({
                 padding: "0 12px",
                 border: `1px solid ${T.line}`,
                 borderRadius: 6,
+                background: T.bg,
                 fontFamily: T.dm,
                 fontSize: 14,
                 color: T.ink,
@@ -764,6 +765,7 @@ function SaveRepoModal({
                 padding: "12px",
                 border: `1px solid ${T.line}`,
                 borderRadius: 6,
+                background: T.bg,
                 fontFamily: T.dm,
                 fontSize: 14,
                 color: T.ink,
@@ -1221,7 +1223,7 @@ export default function PlaygroundShell({ canCreateRepos }: PlaygroundShellProps
                   border: "none",
                   borderRadius: 6,
                   background: T.ink,
-                  color: "#fff",
+                  color: T.bg,
                   fontFamily: T.dm,
                   fontSize: 14,
                   fontWeight: 700,
