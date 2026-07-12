@@ -167,6 +167,19 @@ export default function Home() {
           }}
         />
 
+        {/* Smooth gradient blend at the bottom to transition into the solid bg color */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "220px",
+            background: "linear-gradient(to bottom, rgba(252, 251, 247, 0) 0%, #FCFBF7 100%)",
+            pointerEvents: "none"
+          }}
+        />
+
         <header
           className={`sticky top-0 z-40 transition-all duration-300 ${isScrolled ? "bg-bg/95 backdrop-blur-md shadow-zf" : "bg-transparent"
             }`}
@@ -251,7 +264,7 @@ export default function Home() {
         </section>
       </div>
 
-      <section aria-label="Pupitar product preview" className="px-5 pb-20 md:px-8">
+      <section aria-label="Pupitar product preview" className="px-5 mt-16 pb-20 md:px-8 md:mt-24">
         <div className="mx-auto grid w-full max-w-[1180px] grid-cols-2 gap-3 md:grid-cols-6 md:gap-4">
           {heroTiles.map((tile, index) => (
             <ProductTile key={tile.title} {...tile} index={index} />
