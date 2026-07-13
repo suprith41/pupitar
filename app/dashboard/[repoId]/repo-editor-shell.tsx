@@ -13,6 +13,10 @@ type Repo = Pick<Database["public"]["Tables"]["repos"]["Row"], "id" | "name">;
 type PromptVersion = Database["public"]["Tables"]["prompt_versions"]["Row"];
 type BranchRow = Database["public"]["Tables"]["branches"]["Row"];
 type EvalCaseRow = Database["public"]["Tables"]["eval_cases"]["Row"];
+type RequestLogRow = Pick<
+  Database["public"]["Tables"]["request_logs"]["Row"],
+  "id" | "latency_ms" | "token_count" | "input_tokens" | "output_tokens" | "status" | "created_at"
+>;
 
 type BranchOption = {
   id: string | null;
@@ -43,6 +47,7 @@ type RepoEditorShellProps = {
   initialBranches: BranchRow[];
   initialEvalCases: EvalCaseRow[];
   initialTags: string[];
+  initialRequestLogs: RequestLogRow[];
   deploymentVersionId?: string | null;
   currentUserEmail?: string | null;
   currentUserLabel?: string;
@@ -385,12 +390,14 @@ export default function RepoEditorShell({
   initialBranches,
   initialEvalCases,
   initialTags,
+  initialRequestLogs,
   deploymentVersionId = null,
   currentUserEmail = null,
   currentUserLabel = "account"
 }: RepoEditorShellProps) {
   const [versions, setVersions] = useState(initialVersions);
   const [evalCases, setEvalCases] = useState(initialEvalCases);
+  const [requestLogs] = useState(initialRequestLogs);
   const [branches, setBranches] = useState<BranchOption[]>(() =>
     buildInitialBranches(initialBranches, repo.id)
   );
@@ -412,6 +419,9 @@ export default function RepoEditorShell({
   const [labelDraft, setLabelDraft] = useState("");
   const [labelSaving, setLabelSaving] = useState(false);
   const [labelError, setLabelError] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingRepo, setIsDeletingRepo] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [repoTags, setRepoTags] = useState(initialTags);
   const [tagInput, setTagInput] = useState("");
   const [isTagPanelOpen, setIsTagPanelOpen] = useState(false);
@@ -636,6 +646,18 @@ export default function RepoEditorShell({
     setVersions((current) => current.map((version) => version.id === versionId ? { ...version, release_label: nextLabel } : version));
     setLabelVersionId(null);
     setLabelDraft("");
+  }
+
+  async function deleteRepo() {
+    setIsDeletingRepo(true);
+    setDeleteError("");
+    const { error: deleteRepoError } = await createClient().from("repos").delete().eq("id", repo.id);
+    setIsDeletingRepo(false);
+    if (deleteRepoError) {
+      setDeleteError(deleteRepoError.message);
+      return;
+    }
+    window.location.assign("/dashboard/repos");
   }
 
   async function onCommit(event: FormEvent<HTMLFormElement>) {
@@ -1269,6 +1291,10 @@ export default function RepoEditorShell({
             />
             <button
               type="button"
+              onClick={() => {
+                setDeleteError("");
+                setIsDeleteDialogOpen(true);
+              }}
               className="rounded-pill border border-transparent px-3 py-1.5 text-sm font-medium text-error transition-colors hover:border-[#F9D6D3] hover:bg-[#FEF3F2]"
             >
               Delete
@@ -1470,6 +1496,7 @@ export default function RepoEditorShell({
                   <button
                     type="button"
                     aria-label="Settings"
+                    onClick={() => setIsTagPanelOpen(true)}
                     className="rounded-full border border-line bg-white p-2 text-muted transition-colors hover:border-accent hover:text-accent"
                   >
                     <GearIcon />
@@ -1481,7 +1508,7 @@ export default function RepoEditorShell({
                 Viewing Version {selectedVersionNumber} of {orderedVersions.length}
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[#FCFBF7] p-5">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#0F0F0F] p-5">
                 {mergeMessage ? <p className="mb-4 text-sm text-muted">{mergeMessage}</p> : null}
 
                 {mergeFlow ? (
@@ -1495,14 +1522,12 @@ export default function RepoEditorShell({
                     onBack={exitDiffView}
                   />
                 ) : overviewTab === "analytics" ? (
-                  <div className="rounded-[20px] border border-line bg-white px-8 py-10 text-sm text-muted">
-                    Coming soon
-                  </div>
+                  <AnalyticsLogsPanel versions={orderedVersions} evalCases={evalCases} requestLogs={requestLogs} />
                 ) : (
                   <>
-                    <div className="rounded-[24px] border border-line bg-white p-8">
+                    <div className="rounded-xl border border-line bg-[#0F0F0F] p-6 md:p-8">
                       <div className="mb-6 flex items-center justify-between gap-4">
-                        <span className="rounded-pill bg-[#F5F5F5] px-3 py-1 text-[12px] font-medium text-muted">
+                        <span className="rounded-pill border border-line bg-[#242424] px-3 py-1 text-[12px] font-medium text-muted">
                           System
                         </span>
                         {previewVersion ? (
@@ -1531,7 +1556,7 @@ export default function RepoEditorShell({
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-[20px] border border-line bg-white px-5 py-4">
+                    <div className="mt-4 rounded-xl border border-line bg-[#0F0F0F] px-5 py-4">
                       <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted">
                         <span className="font-medium text-ink">Placeholder</span>
                         <span>{model}</span>
@@ -1937,6 +1962,81 @@ export default function RepoEditorShell({
           )}
         </section>
       </div>
+
+      {isDeleteDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-5 backdrop-blur-sm" role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="delete-repo-title" className="w-full max-w-[420px] rounded-xl border border-line bg-surface p-6 shadow-elevated">
+            <h2 id="delete-repo-title" className="text-[19px] font-bold text-ink">Delete {repo.name}?</h2>
+            <p className="mt-3 text-sm leading-6 text-muted">This permanently deletes the repo and its versions, branches, evals, and logs. This action cannot be undone.</p>
+            {deleteError ? <p role="alert" className="mt-3 text-sm text-error">{deleteError}</p> : null}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeletingRepo} className="rounded-pill border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-accent disabled:opacity-50">Cancel</button>
+              <button type="button" onClick={() => void deleteRepo()} disabled={isDeletingRepo} className="rounded-pill bg-error px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50">{isDeletingRepo ? "Deleting…" : "Delete repo"}</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AnalyticsLogsPanel({
+  versions,
+  evalCases,
+  requestLogs
+}: {
+  versions: PromptVersion[];
+  evalCases: EvalCaseRow[];
+  requestLogs: RequestLogRow[];
+}) {
+  const successfulRequests = requestLogs.filter((log) => !log.status || log.status.toLowerCase() === "success").length;
+  const averageLatency = requestLogs.length
+    ? Math.round(requestLogs.reduce((sum, log) => sum + (log.latency_ms ?? 0), 0) / requestLogs.length)
+    : 0;
+  const totalTokens = requestLogs.reduce((sum, log) => sum + (log.token_count ?? 0), 0);
+  const statCards = [
+    { label: "Versions", value: String(versions.length), detail: versions[0] ? `Latest ${formatRelativeTime(versions[0].created_at)}` : "No versions yet" },
+    { label: "Eval cases", value: String(evalCases.length), detail: evalCases.length ? "Ready to run" : "Add cases in Evals" },
+    { label: "Requests", value: String(requestLogs.length), detail: requestLogs.length ? `${successfulRequests}/${requestLogs.length} successful` : "No recent requests" },
+    { label: "Avg. latency", value: requestLogs.length ? `${averageLatency}ms` : "—", detail: requestLogs.length ? `${totalTokens.toLocaleString()} tokens` : "No request data" }
+  ];
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto bg-[#0F0F0F] p-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((stat) => (
+          <div key={stat.label} className="rounded-xl border border-line bg-[#141414] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{stat.label}</p>
+            <p className="mt-2 text-[24px] font-bold tracking-[-0.03em] text-ink">{stat.value}</p>
+            <p className="mt-1 text-[12px] text-muted">{stat.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <section className="mt-5 overflow-hidden rounded-xl border border-line bg-[#141414]">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <div>
+            <p className="text-[14px] font-semibold text-ink">Recent requests</p>
+            <p className="mt-1 text-[12px] text-muted">Latest runtime activity for this repo</p>
+          </div>
+          <span className="rounded-pill bg-[#242424] px-2.5 py-1 text-[11px] text-muted">{requestLogs.length} shown</span>
+        </div>
+        {requestLogs.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left">
+              <thead className="bg-[#1A1A1A] text-[11px] uppercase tracking-[0.1em] text-muted">
+                <tr><th className="px-5 py-3 font-medium">Time</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 font-medium">Latency</th><th className="px-5 py-3 font-medium">Tokens</th></tr>
+              </thead>
+              <tbody>
+                {requestLogs.map((log) => {
+                  const success = !log.status || log.status.toLowerCase() === "success";
+                  return <tr key={log.id} className="border-t border-line text-[13px] text-muted"><td className="px-5 py-3">{formatDateTime(log.created_at)}</td><td className="px-5 py-3"><span className={`rounded-pill px-2 py-0.5 text-[11px] ${success ? "bg-[#0F2A1A] text-success" : "bg-[#2A1717] text-error"}`}>{log.status || "success"}</span></td><td className="px-5 py-3 font-mono text-[12px] text-ink">{log.latency_ms != null ? `${log.latency_ms}ms` : "—"}</td><td className="px-5 py-3 font-mono text-[12px] text-ink">{(log.token_count ?? 0).toLocaleString()}</td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : <div className="px-5 py-12 text-center"><p className="text-sm font-medium text-ink">No requests yet</p><p className="mt-2 text-sm text-muted">Deploy a version and send requests to see runtime activity here.</p></div>}
+      </section>
     </div>
   );
 }

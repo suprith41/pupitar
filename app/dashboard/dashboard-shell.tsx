@@ -311,7 +311,7 @@ export function Sidebar({
         }}
       >
         <Link
-          href="/dashboard"
+          href="/"
           style={{
             display: "flex",
             alignItems: "center",

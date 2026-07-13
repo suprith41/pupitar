@@ -39,7 +39,8 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     { data: branches, error: branchesError },
     { data: evalCases, error: evalCasesError },
     { data: deployment },
-    { data: repoTags }
+    { data: repoTags },
+    { data: requestLogs }
   ] =
     await Promise.all([
       supabase.from("repos").select("id, name").eq("id", params.repoId).eq("owner_id", user.id).single(),
@@ -65,7 +66,13 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
         .select("active_version_id")
         .eq("repo_id", params.repoId)
         .maybeSingle(),
-      supabase.from("repo_tags").select("tag").eq("repo_id", params.repoId).order("created_at", { ascending: true })
+      supabase.from("repo_tags").select("tag").eq("repo_id", params.repoId).order("created_at", { ascending: true }),
+      supabase
+        .from("request_logs")
+        .select("id, latency_ms, token_count, input_tokens, output_tokens, status, created_at")
+        .eq("repo_id", params.repoId)
+        .order("created_at", { ascending: false })
+        .limit(20)
     ]);
 
   if (repoError || !repo) {
@@ -123,6 +130,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
           initialBranches={branches ?? []}
           initialEvalCases={evalCases ?? []}
           initialTags={(repoTags ?? []).map((row) => row.tag)}
+          initialRequestLogs={requestLogs ?? []}
           deploymentVersionId={deployment?.active_version_id ?? null}
           currentUserEmail={user.email ?? null}
           currentUserLabel={user.email?.split("@")[0] ?? "account"}

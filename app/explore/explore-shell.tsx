@@ -5,7 +5,7 @@ import { formatRelativeTime } from "@/lib/time";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast, type ForkTarget } from "./fork-modal";
-import { ExploreNavbar } from "@/components/explore-navbar";
+import { Sidebar } from "../dashboard/dashboard-shell";
 
 export type ExploreRepo = {
   id: string;
@@ -62,6 +62,11 @@ export default function ExploreShell({
   const [forkBusy, setForkBusy] = useState(false);
   const [forkError, setForkError] = useState<string | null>(null);
   const [showForkToast, setShowForkToast] = useState(false);
+
+  async function signOut() {
+    await createClient().auth.signOut();
+    router.refresh();
+  }
 
   const visibleRepos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -156,11 +161,13 @@ export default function ExploreShell({
   }
 
   return (
-    <div className="pupitar-dashboard min-h-screen bg-[#0F0F0F] text-[#F0F0F0]">
-      <main className="min-w-0 px-5 py-6 md:px-8 md:py-8">
+    <div className="pupitar-dashboard flex min-h-screen bg-[#0F0F0F] text-[#F0F0F0]">
+      <div className="hidden md:block">
+        <Sidebar userEmail={userEmail} onSignOut={signOut} />
+      </div>
+      <main className="min-w-0 flex-1 px-5 py-6 md:px-8 md:py-8">
         <div className="mx-auto w-full max-w-[1440px]">
-          <ExploreNavbar isAuthenticated={isAuthenticated} userEmail={userEmail} />
-          <div className="mt-7 flex flex-col gap-5 border-b border-[#2A2A2A] pb-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 border-b border-[#2A2A2A] pb-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="m-0 font-heading text-[22px] font-bold text-[#F0F0F0]">Explore</h1>
               <p className="mt-1.5 text-[14px] text-[#A0A0A0]">Discover and fork public prompt repos</p>

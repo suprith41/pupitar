@@ -7,9 +7,9 @@ type RepoRow = {
   owner_id: string;
   name: string;
   description: string | null;
-  star_count: number;
-  fork_count: number;
-  updated_at: string;
+  star_count?: number;
+  fork_count?: number;
+  updated_at?: string;
   created_at: string;
 };
 
@@ -29,13 +29,23 @@ export default async function ExplorePage() {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
+  const primaryReposResult = await supabase
     .from("repos")
     .select("id, owner_id, name, description, star_count, fork_count, updated_at, created_at")
     .eq("is_public", true)
     .order("updated_at", { ascending: false });
 
-  const repos = (data ?? []) as RepoRow[];
+  // Existing projects may not have run the discovery migration yet. Keep Explore
+  // usable for their public repos while the enhanced counters are unavailable.
+  const fallbackReposResult = primaryReposResult.error
+    ? await supabase
+        .from("repos")
+        .select("id, owner_id, name, description, created_at")
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+    : null;
+
+  const repos = (primaryReposResult.data ?? fallbackReposResult?.data ?? []) as RepoRow[];
   const repoIds = repos.map((repo) => repo.id);
   const ownerIds = Array.from(new Set(repos.map((repo) => repo.owner_id)));
 
@@ -80,6 +90,9 @@ export default async function ExplorePage() {
 
   const entries: ExploreRepo[] = repos.map((repo) => ({
     ...repo,
+    star_count: repo.star_count ?? 0,
+    fork_count: repo.fork_count ?? 0,
+    updated_at: repo.updated_at ?? repo.created_at,
     tags: tagsByRepo.get(repo.id) ?? [],
     ownerLabel: ownerNames.get(repo.owner_id)?.trim() || "Pupitar creator",
     latestPromptContent: latestPrompt.get(repo.id) ?? null,
@@ -87,7 +100,7 @@ export default async function ExplorePage() {
     forkedRepoId: forksByRepo.get(repo.id) ?? null
   }));
 
-  const note = error?.message ?? versionsResult.error?.message ?? profilesResult.error?.message ?? starsResult.error?.message ?? tagsResult.error?.message ?? forksResult.error?.message ?? null;
+  const note = fallbackReposResult?.error?.message ?? versionsResult.error?.message ?? null;
 
   return <ExploreShell repos={entries} userEmail={user?.email ?? null} isAuthenticated={Boolean(user)} initialNote={note} />;
 }
