@@ -524,6 +524,35 @@ body {
   font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace !important;
 }
 
+.dashboard-empty-illustration {
+  display: block;
+  width: min(190px, 62vw);
+  height: auto;
+  color: var(--dash-muted);
+  filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--dash-ink) 9%, transparent));
+}
+
+.dashboard-empty-float {
+  transform-origin: 95px 80px;
+  animation: dashboard-illustration-float 4.8s ease-in-out infinite;
+}
+
+.dashboard-empty-float-slow {
+  animation-delay: -2.4s;
+  animation-duration: 6.4s;
+}
+
+@keyframes dashboard-illustration-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-empty-float {
+    animation: none;
+  }
+}
+
 .dashboard-developer-ui main button:not(.rounded-full):not(.rounded-pill) {
   min-height: 32px;
 }

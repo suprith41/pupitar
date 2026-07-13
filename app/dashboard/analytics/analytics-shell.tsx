@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
 import { Sidebar } from "../dashboard-shell";
+import { DashboardEmptyIllustration } from "@/components/dashboard-empty-illustration";
 import {
   Bar,
   BarChart,
@@ -168,16 +169,7 @@ function EmptyState() {
       }}
     >
       <div style={{ textAlign: "center", maxWidth: 520, padding: 24 }}>
-        <div
-          style={{
-            width: 88,
-            height: 88,
-            borderRadius: "50%",
-            margin: "0 auto 18px",
-            background: "radial-gradient(circle at 30% 30%, rgba(32,103,255,0.18), rgba(32,103,255,0.04) 60%, rgba(255,255,255,0) 70%)",
-            border: `1px solid ${T.line}`
-          }}
-        />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}><DashboardEmptyIllustration kind="analytics" /></div>
         <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>No data yet.</div>
         <p style={{ margin: "10px 0 0", fontFamily: T.dm, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
           Deploy a prompt and make some API calls to see analytics here.

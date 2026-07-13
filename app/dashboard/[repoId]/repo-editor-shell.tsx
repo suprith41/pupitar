@@ -8,6 +8,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
+import { DashboardEmptyIllustration } from "@/components/dashboard-empty-illustration";
 
 type Repo = Pick<Database["public"]["Tables"]["repos"]["Row"], "id" | "name">;
 type PromptVersion = Database["public"]["Tables"]["prompt_versions"]["Row"];
@@ -1792,7 +1793,10 @@ export default function RepoEditorShell({
 
               <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
                 {evalCases.length === 0 ? (
-                  <p className="text-sm text-muted">No eval cases yet.</p>
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <DashboardEmptyIllustration kind="evals" />
+                    <p className="mt-2 text-sm text-muted">No eval cases yet.</p>
+                  </div>
                 ) : (
                   evalCases.map((evalCase) => {
                     const result = evalRunResults?.find((item) => item.eval_case_id === evalCase.id);

@@ -416,3 +416,6 @@ $$;
 
 revoke all on function public.fork_public_repo(uuid, text, text) from public;
 grant execute on function public.fork_public_repo(uuid, text, text) to authenticated;
+
+-- Make the newly created RPCs immediately visible to PostgREST clients.
+notify pgrst, 'reload schema';

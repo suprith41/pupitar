@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { NewRepoModal, Sidebar } from "../dashboard-shell";
+import { DashboardEmptyIllustration } from "@/components/dashboard-empty-illustration";
 
 export type RepoEntry = {
   id: string;
@@ -441,7 +442,7 @@ function EmptyState({
       }}
     >
       <div>
-        <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 18 }}>📁</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}><DashboardEmptyIllustration kind="repos" /></div>
         <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>No repos yet.</div>
         <p style={{ margin: "10px 0 0", fontFamily: T.dm, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
           {message ?? "Create your first prompt repo to get started."}

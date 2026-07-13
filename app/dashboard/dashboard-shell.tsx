@@ -7,6 +7,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
 import { PupitarLogo } from "@/components/logo";
+import { DashboardEmptyIllustration } from "@/components/dashboard-empty-illustration";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -878,7 +879,7 @@ function EmptyState({
         textAlign: "center"
       }}
     >
-      <span style={{ fontSize: 48, lineHeight: 1 }}>📝</span>
+      <DashboardEmptyIllustration kind="repos" />
       <p
         style={{
           fontFamily: T.dm,
@@ -1622,6 +1623,165 @@ function Sparkline({
   );
 }
 
+function HomeRepoLaunchpad({
+  onNewRepo,
+  canCreateRepos,
+  errorMessage
+}: {
+  onNewRepo: () => void;
+  canCreateRepos: boolean;
+  errorMessage?: string;
+}) {
+  const [createHovered, setCreateHovered] = useState(false);
+  const [exploreHovered, setExploreHovered] = useState(false);
+  const steps = ["Prompt", "Version", "Evaluate"];
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "grid",
+        placeItems: "center",
+        minHeight: 372,
+        overflow: "hidden",
+        border: `1px solid ${T.line}`,
+        borderRadius: 16,
+        background: `radial-gradient(ellipse 48% 58% at 50% 0%, ${T.accentLight} 0%, transparent 100%), ${T.surface}`
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -94,
+          left: "50%",
+          width: 280,
+          height: 190,
+          transform: "translateX(-50%)",
+          borderRadius: "50%",
+          background: T.accentLight,
+          filter: "blur(30px)",
+          opacity: 0.48,
+          pointerEvents: "none"
+        }}
+      />
+
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          maxWidth: 470,
+          padding: "28px 24px 30px",
+          textAlign: "center"
+        }}
+      >
+        <div style={{ transform: "scale(1.12)", transformOrigin: "center bottom", marginBottom: 4 }}>
+          <DashboardEmptyIllustration kind="repos" />
+        </div>
+
+        <div
+          style={{
+            marginTop: 4,
+            color: T.accent,
+            fontFamily: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace',
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase"
+          }}
+        >
+          Your prompt workspace
+        </div>
+
+        <h2 style={{ margin: "8px 0 0", fontFamily: T.dm, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: T.ink }}>
+          {canCreateRepos ? "Build your first prompt repo." : "Connect Supabase to begin."}
+        </h2>
+        <p style={{ margin: "8px 0 0", maxWidth: 360, fontFamily: T.dm, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
+          {errorMessage
+            ? errorMessage
+            : canCreateRepos
+            ? "Keep prompts, versions, evaluations, and releases in one focused place."
+            : "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your frontend environment, then restart."}
+        </p>
+
+        <div
+          aria-label="Prompt repository workflow"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", margin: "18px 0 22px" }}
+        >
+          {steps.map((step, index) => (
+            <div key={step} style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: index === 0 ? T.accent : T.line }} />
+                <span
+                  style={{
+                    fontFamily: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.045em",
+                    color: index === 0 ? T.ink : T.muted,
+                    textTransform: "uppercase"
+                  }}
+                >
+                  {step}
+                </span>
+              </div>
+              {index < steps.length - 1 && <span aria-hidden="true" style={{ width: 28, height: 1, margin: "0 10px", background: T.line }} />}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={onNewRepo}
+            disabled={!canCreateRepos}
+            onMouseEnter={() => setCreateHovered(true)}
+            onMouseLeave={() => setCreateHovered(false)}
+            style={{
+              minHeight: 40,
+              padding: "0 17px",
+              border: "1px solid transparent",
+              borderRadius: 8,
+              background: !canCreateRepos ? T.accentLight : createHovered ? T.accentHover : T.accent,
+              color: "#fff",
+              fontFamily: T.dm,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: canCreateRepos ? "pointer" : "not-allowed",
+              opacity: canCreateRepos ? 1 : 0.72,
+              transition: "background 150ms ease, transform 150ms ease",
+              transform: createHovered && canCreateRepos ? "translateY(-1px)" : "translateY(0)"
+            }}
+          >
+            + Create repo
+          </button>
+          <Link
+            href="/explore"
+            onMouseEnter={() => setExploreHovered(true)}
+            onMouseLeave={() => setExploreHovered(false)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              minHeight: 40,
+              color: exploreHovered ? T.accentHover : T.accent,
+              fontFamily: T.dm,
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: "none",
+              transition: "color 150ms ease"
+            }}
+          >
+            Explore public repos →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Root Shell ────────────────────────────────────────────────────────────────
 
 export default function DashboardShell({
@@ -1950,42 +2110,11 @@ export default function DashboardShell({
               </div>
 
               {visibleRepos.length === 0 ? (
-                <div
-                  style={{
-                    display: "grid",
-                    placeItems: "center",
-                    minHeight: 320,
-                    border: `1px solid ${T.line}`,
-                    borderRadius: 8,
-                    background: T.surface
-                  }}
-                >
-                  <div style={{ textAlign: "center", maxWidth: 360, padding: 24 }}>
-                    <div style={{ fontSize: 36, marginBottom: 12 }}>📝</div>
-                    <div style={{ fontFamily: T.dm, fontSize: 18, fontWeight: 700, color: T.ink }}>No repos yet.</div>
-                    <p style={{ margin: "10px 0 18px", fontFamily: T.dm, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
-                      Create your first prompt repo to get started.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(true)}
-                      style={{
-                        height: 38,
-                        padding: "0 16px",
-                        border: "none",
-                        borderRadius: 6,
-                        background: T.accent,
-                        color: "#fff",
-                        fontFamily: T.dm,
-                        fontSize: 14,
-                        fontWeight: 700,
-                        cursor: "pointer"
-                      }}
-                    >
-                      + Create repo
-                    </button>
-                  </div>
-                </div>
+                <HomeRepoLaunchpad
+                  onNewRepo={() => setIsModalOpen(true)}
+                  canCreateRepos={canCreateRepos}
+                  errorMessage={initialErrorMessage}
+                />
               ) : (
                 <div
                   style={{

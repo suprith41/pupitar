@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast } from "../fork-modal";
 import { ExploreNavbar } from "@/components/explore-navbar";
 import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
+import { StarIcon } from "@/components/star-icon";
 
 type PublicRepo = {
   id: string;
@@ -144,15 +145,31 @@ function PublicRepoShellContent({
     setStarCount(Math.max(0, previousCount + (optimisticStarred ? 1 : -1)));
     setBusy("star");
     setNote(null);
-    const { data, error } = await createClient().rpc("toggle_repo_star", { target_repo_id: repo.id });
+    const supabase = createClient();
+    const rpcResult = await supabase.rpc("toggle_repo_star", { target_repo_id: repo.id });
+    let nextStarred = rpcResult.data;
+    let starError: { message: string } | null = rpcResult.error;
+
+    if (starError?.message.includes("toggle_repo_star")) {
+      const { data: userResult, error: userError } = await supabase.auth.getUser();
+      if (userError || !userResult.user) {
+        starError = { message: userError?.message ?? "Please sign in to star this repo." };
+      } else {
+        const fallbackResult = optimisticStarred
+          ? await supabase.from("repo_stars").insert({ repo_id: repo.id, user_id: userResult.user.id })
+          : await supabase.from("repo_stars").delete().eq("repo_id", repo.id).eq("user_id", userResult.user.id);
+        starError = fallbackResult.error;
+        nextStarred = optimisticStarred;
+      }
+    }
     setBusy(null);
-    if (error) {
+    if (starError) {
       setStarred(previousStarred);
       setStarCount(previousCount);
-      setNote(error.message);
+      setNote(starError.message);
       return;
     }
-    const next = Boolean(data);
+    const next = Boolean(nextStarred);
     if (next !== optimisticStarred) {
       setStarred(next);
       setStarCount(Math.max(0, previousCount + (next === previousStarred ? 0 : next ? 1 : -1)));
@@ -202,7 +219,7 @@ function PublicRepoShellContent({
                 {repo.tags.map((tag) => <span key={tag} className="rounded-full bg-[#242424] px-2.5 py-1 text-[11px] text-[#A0A0A0]">{tag}</span>)}
               </div>
             ) : null}
-            <p className="mt-5 text-[13px] text-[#606060]">⭐ {starCount} stars <span className="mx-1.5">·</span> 🍴 {forkCount} forks <span className="mx-1.5">·</span> {versions.length} versions <span className="mx-1.5">·</span> Updated {formatRelativeTime(repo.updated_at)}</p>
+            <p className="mt-5 flex items-center gap-1 text-[13px] text-[#606060]"><StarIcon className="h-3.5 w-3.5" /> {starCount} stars <span className="mx-1.5">·</span> 🍴 {forkCount} forks <span className="mx-1.5">·</span> {versions.length} versions <span className="mx-1.5">·</span> Updated {formatRelativeTime(repo.updated_at)}</p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -210,9 +227,9 @@ function PublicRepoShellContent({
               type="button"
               onClick={() => void toggleStar()}
               disabled={busy !== null}
-              className={`h-10 rounded-md border px-4 text-[13px] font-semibold transition-colors disabled:opacity-50 ${starred ? "border-[#2067FF] bg-[#2067FF] text-white" : "border-[#2A2A2A] bg-[#1A1A1A] text-[#F0F0F0] hover:border-[#2067FF]"}`}
+              className={`inline-flex h-10 items-center gap-2 rounded-md border px-4 text-[13px] font-semibold transition-colors disabled:opacity-50 ${starred ? "border-[#D29922] bg-[#1A1A1A] text-[#F4B740]" : "border-[#2A2A2A] bg-[#1A1A1A] text-[#F0F0F0] hover:border-[#D29922]"}`}
             >
-              {busy === "star" ? "Saving…" : starred ? "★ Starred" : "⭐ Star"}
+              {busy === "star" ? "Saving…" : <><StarIcon filled={starred} className="h-4 w-4" /> {starred ? "Starred" : "Star"}</>}
             </button>
             <button type="button" onClick={() => { setForkError(null); setForkModalOpen(true); }} disabled={busy !== null} className="h-10 rounded-md bg-[#2067FF] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#2F6BFF] disabled:opacity-50">
               Fork

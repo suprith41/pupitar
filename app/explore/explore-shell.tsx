@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast, type ForkTarget } from "./fork-modal";
 import { Sidebar } from "../dashboard/dashboard-shell";
 import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
+import { StarIcon } from "@/components/star-icon";
 
 export type ExploreRepo = {
   id: string;
@@ -114,19 +115,37 @@ function ExploreShellContent({
     );
     setBusyRepoId(repo.id);
     setNote(null);
-    const { data, error } = await createClient().rpc("toggle_repo_star", { target_repo_id: repo.id });
+    const supabase = createClient();
+    const rpcResult = await supabase.rpc("toggle_repo_star", { target_repo_id: repo.id });
+    let nextStarred = rpcResult.data;
+    let starError: { message: string } | null = rpcResult.error;
+
+    // A few existing installations have the repo_stars table but not the later
+    // RPC migration. Keep starring available while the migration is deployed.
+    if (starError?.message.includes("toggle_repo_star")) {
+      const { data: userResult, error: userError } = await supabase.auth.getUser();
+      if (userError || !userResult.user) {
+        starError = { message: userError?.message ?? "Please sign in to star this repo." };
+      } else {
+        const fallbackResult = optimisticStarred
+          ? await supabase.from("repo_stars").insert({ repo_id: repo.id, user_id: userResult.user.id })
+          : await supabase.from("repo_stars").delete().eq("repo_id", repo.id).eq("user_id", userResult.user.id);
+        starError = fallbackResult.error;
+        nextStarred = optimisticStarred;
+      }
+    }
     setBusyRepoId(null);
-    if (error) {
+    if (starError) {
       setRepos((current) =>
         current.map((item) => item.id === repo.id
           ? { ...item, isStarred: repo.isStarred, star_count: repo.star_count }
           : item)
       );
-      setNote(error.message);
+      setNote(starError.message);
       return;
     }
 
-    const isStarred = Boolean(data);
+    const isStarred = Boolean(nextStarred);
     if (isStarred !== optimisticStarred) {
       setRepos((current) => current.map((item) => item.id === repo.id
         ? {
@@ -269,7 +288,9 @@ function ExploreShellContent({
 
                   <div className="mt-auto flex items-end justify-between gap-4 pt-5">
                     <div>
-                      <p className="text-[12px] text-[#606060]">⭐ {repo.star_count} <span className="mx-1">·</span> 🍴 {repo.fork_count}</p>
+                      <p className="flex items-center gap-1 text-[12px] text-[#606060]">
+                        <StarIcon className="h-3.5 w-3.5" /> {repo.star_count} <span className="mx-1">·</span> 🍴 {repo.fork_count}
+                      </p>
                       <p className="mt-1 text-[11px] text-[#606060]">Updated {formatRelativeTime(repo.updated_at)}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -278,9 +299,9 @@ function ExploreShellContent({
                         aria-label={repo.isStarred ? `Unstar ${repo.name}` : `Star ${repo.name}`}
                         disabled={busyRepoId === repo.id}
                         onClick={(event) => { event.stopPropagation(); void toggleStar(repo); }}
-                        className={`h-8 rounded-md border px-2.5 text-[14px] transition-colors disabled:opacity-50 ${repo.isStarred ? "border-[#2067FF] bg-[#2067FF] text-white" : "border-[#2A2A2A] bg-[#1A1A1A] text-[#F0F0F0] hover:border-[#2067FF]"}`}
+                        className={`inline-flex h-8 items-center justify-center rounded-md border px-2.5 transition-colors disabled:opacity-50 ${repo.isStarred ? "border-[#D29922] bg-[#1A1A1A] text-[#F4B740]" : "border-[#2A2A2A] bg-[#1A1A1A] text-[#F0F0F0] hover:border-[#D29922]"}`}
                       >
-                        {repo.isStarred ? "★" : "⭐"}
+                        <StarIcon filled={repo.isStarred} className="h-4 w-4" />
                       </button>
                       <button
                         type="button"

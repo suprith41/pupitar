@@ -7,6 +7,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { Sidebar } from "../dashboard-shell";
 import type { ReactNode } from "react";
 import { useDashboardTheme, type DashboardTheme } from "@/components/dashboard-theme-provider";
+import { DashboardEmptyIllustration } from "@/components/dashboard-empty-illustration";
 
 type Profile = {
   role: string | null;
@@ -700,16 +701,21 @@ export default function SettingsShell({ canCreateRepos: _canCreateRepos, data }:
                 {data.deployments.length === 0 ? (
                   <div
                     style={{
-                      padding: 16,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      padding: 20,
                       border: `1px solid ${T.line}`,
                       borderRadius: 8,
                       background: T.surface,
                       fontFamily: T.dm,
                       fontSize: 14,
-                      color: T.muted
+                      color: T.muted,
+                      textAlign: "center"
                     }}
                   >
-                    No deployed API keys yet.
+                    <DashboardEmptyIllustration kind="deployments" />
+                    <span style={{ marginTop: 2 }}>No deployed API keys yet.</span>
                   </div>
                 ) : (
                   data.deployments.map((deployment) => (

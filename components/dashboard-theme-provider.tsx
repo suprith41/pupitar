@@ -14,7 +14,7 @@ type DashboardThemeContextValue = {
 const DashboardThemeContext = createContext<DashboardThemeContextValue | null>(null);
 
 export function DashboardThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<DashboardTheme>("dark");
+  const [theme, setThemeState] = useState<DashboardTheme>("light");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem(STORAGE_KEY);
