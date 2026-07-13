@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useState } from "react";
 
 export type DashboardTheme = "light" | "dark";
 
@@ -14,9 +14,9 @@ type DashboardThemeContextValue = {
 const DashboardThemeContext = createContext<DashboardThemeContextValue | null>(null);
 
 export function DashboardThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<DashboardTheme>("light");
+  const [theme, setThemeState] = useState<DashboardTheme>("dark");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const storedTheme = window.localStorage.getItem(STORAGE_KEY);
     if (storedTheme === "light" || storedTheme === "dark") {
       setThemeState(storedTheme);

@@ -44,6 +44,7 @@ const T = {
   dangerBg: "var(--dash-danger-soft)",
   accent: "var(--dash-accent)",
   accentHover: "var(--dash-accent-hover)",
+  accentLight: "var(--dash-accent-soft)",
   success: "var(--dash-success)",
   lineSoft: "var(--dash-elevated)",
   dm: '"DM Sans", Arial, sans-serif',
@@ -518,9 +519,10 @@ export default function SettingsShell({ canCreateRepos: _canCreateRepos, data }:
                       onClick={() => setTheme(option)}
                       aria-pressed={active}
                       className="dashboard-theme-option"
+                      data-active={active}
                       style={{
-                        border: `2px solid ${active ? T.accent : T.line}`,
-                        background: T.surface,
+                        border: `1px solid ${active ? T.accent : T.line}`,
+                        background: active ? T.accentLight : T.surface,
                         color: T.ink
                       }}
                     >
@@ -531,13 +533,23 @@ export default function SettingsShell({ canCreateRepos: _canCreateRepos, data }:
                           borderColor: dark ? "#30363d" : "#d0d7de"
                         }}
                       >
-                        <span style={{ background: dark ? "#161b22" : "#f6f8fa", borderColor: dark ? "#30363d" : "#d0d7de" }} />
-                        <span style={{ background: dark ? "#21262d" : "#ffffff", borderColor: dark ? "#30363d" : "#d0d7de" }} />
-                        <span style={{ background: dark ? "#2f81f7" : "#0969da" }} />
+                        <span className="dashboard-theme-preview-bar" style={{ background: dark ? "#161b22" : "#f6f8fa", borderColor: dark ? "#30363d" : "#d0d7de" }} />
+                        <span className="dashboard-theme-preview-body">
+                          <span className="dashboard-theme-preview-sidebar" style={{ background: dark ? "#161b22" : "#f6f8fa", borderColor: dark ? "#30363d" : "#d0d7de" }} />
+                          <span className="dashboard-theme-preview-content" style={{ background: dark ? "#21262d" : "#ffffff", borderColor: dark ? "#30363d" : "#d0d7de" }}>
+                            <span style={{ background: dark ? "#8b949e" : "#59636e" }} />
+                            <span style={{ background: dark ? "#2f81f7" : "#0969da" }} />
+                          </span>
+                        </span>
                       </span>
-                      <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%" }}>
-                        <span style={{ fontFamily: T.dm, fontSize: 14, fontWeight: 700, textTransform: "capitalize" }}>{option}</span>
-                        <span style={{ fontFamily: T.mono, fontSize: 11, color: active ? T.accent : T.muted }}>{active ? "ACTIVE" : "SELECT"}</span>
+                      <span className="dashboard-theme-option-meta">
+                        <span>
+                          <span style={{ display: "block", fontFamily: T.dm, fontSize: 14, fontWeight: 700, textTransform: "capitalize" }}>{option}</span>
+                          <span className="dashboard-theme-option-description">{dark ? "Low-light workspace" : "Bright workspace"}</span>
+                        </span>
+                        <span className={`dashboard-theme-option-state${active ? " is-active" : ""}`}>
+                          {active ? <><span aria-hidden="true">✓</span> Current</> : "Choose"}
+                        </span>
                       </span>
                     </button>
                   );

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ComponentType, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ComponentType, FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -267,19 +267,19 @@ function NavItem({
         display: "flex",
         alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
-        gap: collapsed ? 0 : 10,
-        height: 36,
-        padding: collapsed ? 0 : "0 12px",
-        margin: collapsed ? "3px 10px" : "2px 8px",
-        borderLeft: isActive ? `2px solid ${T.accent}` : "2px solid transparent",
-        borderRadius: 6,
+        gap: collapsed ? 0 : 9,
+        height: 42,
+        padding: collapsed ? 0 : "0 13px",
+        margin: collapsed ? "3px 11px" : "2px 10px",
+        border: "1px solid transparent",
+        borderRadius: 15,
         textDecoration: "none",
         fontFamily: T.dm,
         fontSize: 14,
-        fontWeight: isActive ? 500 : 400,
-        color: isActive ? T.accent : T.muted,
-        background: isActive ? T.accentLight : hovered ? T.hover : "transparent",
-        transition: "background 150ms ease, color 150ms ease",
+        fontWeight: isActive ? 700 : 500,
+        color: isActive ? "#fff" : T.muted,
+        background: isActive ? T.accent : hovered ? T.hover : "transparent",
+        transition: "background 150ms ease, color 150ms ease, transform 150ms ease",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis"
@@ -307,10 +307,12 @@ export function Sidebar({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHovered, setMenuHovered] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarReady, setSidebarReady] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+    setSidebarReady(true);
   }, []);
 
   function toggleSidebar() {
@@ -346,13 +348,13 @@ export function Sidebar({
         background: T.surface,
         borderRight: `1px solid ${T.line}`,
         overflow: "visible",
-        transition: "width 180ms ease"
+        transition: sidebarReady ? "width 180ms ease" : "none"
       }}
     >
       {/* Logo */}
       <div
         style={{
-          padding: collapsed ? "16px 10px" : "16px 14px",
+          padding: collapsed ? "15px 10px" : "15px 14px",
           borderBottom: `1px solid ${T.line}`,
           display: "flex",
           alignItems: "center",
@@ -365,10 +367,10 @@ export function Sidebar({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: collapsed ? 0 : 8,
+            gap: collapsed ? 0 : 10,
             fontFamily: T.dm,
-            fontWeight: 700,
-            fontSize: 16,
+            fontWeight: 800,
+            fontSize: 20,
             color: T.accent,
             textDecoration: "none",
             lineHeight: 1
@@ -376,7 +378,7 @@ export function Sidebar({
           aria-label="Dashboard home"
           title={collapsed ? "Dashboard home" : undefined}
         >
-          <PupitarLogo size={18} />
+          <PupitarLogo size={24} />
           {!collapsed ? "Pupitar" : null}
         </Link>
         {!collapsed ? (
@@ -434,7 +436,7 @@ export function Sidebar({
       ) : null}
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: 8, overflow: "hidden" }}>
+      <nav style={{ flex: 1, paddingTop: 6, overflow: "hidden" }}>
         {NAV_ITEMS.map((item) => (
           <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
