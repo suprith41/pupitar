@@ -272,6 +272,8 @@ body {
   --dash-success-soft: #12261e;
   --dash-error: #f85149;
   --dash-danger-soft: #2d1618;
+  --dash-shadow: 0 10px 30px rgba(1, 4, 9, 0.22);
+  --dash-shadow-hover: 0 16px 34px rgba(1, 4, 9, 0.3);
 }
 
 .dashboard-developer-ui[data-dashboard-theme="light"] {
@@ -291,6 +293,8 @@ body {
   --dash-success-soft: #dafbe1;
   --dash-error: #cf222e;
   --dash-danger-soft: #ffebe9;
+  --dash-shadow: 0 8px 22px rgba(31, 35, 40, 0.08);
+  --dash-shadow-hover: 0 14px 30px rgba(31, 35, 40, 0.12);
 }
 
 .pupitar-dashboard.dashboard-developer-ui {
@@ -460,13 +464,6 @@ body {
   border-color: var(--dash-accent) !important;
 }
 
-.dashboard-developer-ui aside,
-.dashboard-developer-ui main,
-.dashboard-developer-ui section,
-.dashboard-developer-ui header {
-  box-shadow: none !important;
-}
-
 .dashboard-developer-ui aside {
   background: var(--dash-surface) !important;
   border-color: var(--dash-line) !important;
@@ -476,19 +473,28 @@ body {
 .dashboard-developer-ui input,
 .dashboard-developer-ui select,
 .dashboard-developer-ui textarea {
-  border-radius: 4px !important;
+  border-radius: 8px !important;
 }
 
 .dashboard-developer-ui [class*="rounded-[20px]"],
 .dashboard-developer-ui [class*="rounded-[24px]"],
 .dashboard-developer-ui .rounded-xl,
 .dashboard-developer-ui .rounded-lg {
-  border-radius: 4px !important;
+  border-radius: 14px !important;
+}
+
+.dashboard-developer-ui [class*="rounded-[16px]"],
+.dashboard-developer-ui .rounded-md {
+  border-radius: 10px !important;
 }
 
 .dashboard-developer-ui [style*="border-radius: 8px"],
 .dashboard-developer-ui [style*="border-radius: 12px"] {
-  border-radius: 4px !important;
+  border-radius: 12px !important;
+}
+
+.dashboard-developer-ui [style*="border-radius: 6px"] {
+  border-radius: 8px !important;
 }
 
 .dashboard-developer-ui aside[style*="width: 240px"] {
@@ -537,7 +543,19 @@ body {
 .dashboard-developer-ui .shadow-card,
 .dashboard-developer-ui .shadow-elevated,
 .dashboard-developer-ui .shadow-blue {
-  box-shadow: none !important;
+  box-shadow: var(--dash-shadow) !important;
+}
+
+.dashboard-developer-ui main > div > div[style*="border-radius"],
+.dashboard-developer-ui main > div > section[class*="border"],
+.dashboard-developer-ui main > div > div[class*="border"] {
+  box-shadow: var(--dash-shadow);
+}
+
+.dashboard-developer-ui main > div > div[style*="border-radius"]:hover,
+.dashboard-developer-ui main > div > section[class*="border"]:hover,
+.dashboard-developer-ui main > div > div[class*="border"]:hover {
+  box-shadow: var(--dash-shadow-hover);
 }
 
 .dashboard-developer-ui input:focus-visible,
