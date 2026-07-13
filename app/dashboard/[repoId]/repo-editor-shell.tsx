@@ -277,9 +277,9 @@ function formatDateTime(value: string) {
 }
 
 function releaseLabelClassName(label: string) {
-  if (label.toLowerCase() === "prod") return "bg-[#0F2A1A] text-[#4CAF82]";
-  if (label.toLowerCase() === "dev") return "bg-[#1A2A4A] text-[#2067FF]";
-  return "bg-[#242424] text-[#A0A0A0]";
+  if (label.toLowerCase() === "prod") return "bg-[var(--dash-success-soft)] text-[var(--dash-success)]";
+  if (label.toLowerCase() === "dev") return "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]";
+  return "bg-[var(--dash-elevated)] text-[var(--dash-muted)]";
 }
 
 function getVersionDisplayNumber(version: PromptVersion, orderedVersions: PromptVersion[]) {
@@ -1254,7 +1254,7 @@ export default function RepoEditorShell({
                 </div>
                 <div className="mt-3 flex min-h-7 flex-wrap gap-1.5">
                   {repoTags.length ? repoTags.map((tag) => (
-                    <span key={tag} className="inline-flex items-center gap-1 rounded-pill bg-[#242424] px-2.5 py-1 text-[11px] text-muted">
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-sm bg-[var(--dash-elevated)] px-2.5 py-1 text-[11px] text-muted">
                       {tag}
                       <button type="button" onClick={() => void removeTag(tag)} disabled={tagMutation === tag} aria-label={`Remove ${tag}`} className="text-sm leading-none text-muted hover:text-error disabled:opacity-50">×</button>
                     </span>
@@ -1295,7 +1295,7 @@ export default function RepoEditorShell({
                 setDeleteError("");
                 setIsDeleteDialogOpen(true);
               }}
-              className="rounded-pill border border-transparent px-3 py-1.5 text-sm font-medium text-error transition-colors hover:border-[#F9D6D3] hover:bg-[#FEF3F2]"
+              className="rounded-pill border border-transparent px-3 py-1.5 text-sm font-medium text-error transition-colors hover:border-[var(--dash-error)] hover:bg-[var(--dash-danger-soft)]"
             >
               Delete
             </button>
@@ -1508,7 +1508,7 @@ export default function RepoEditorShell({
                 Viewing Version {selectedVersionNumber} of {orderedVersions.length}
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[#0F0F0F] p-5">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--dash-bg)] p-5">
                 {mergeMessage ? <p className="mb-4 text-sm text-muted">{mergeMessage}</p> : null}
 
                 {mergeFlow ? (
@@ -1525,9 +1525,9 @@ export default function RepoEditorShell({
                   <AnalyticsLogsPanel versions={orderedVersions} evalCases={evalCases} requestLogs={requestLogs} />
                 ) : (
                   <>
-                    <div className="rounded-xl border border-line bg-[#0F0F0F] p-6 md:p-8">
+                    <div className="rounded-sm border border-line bg-[var(--dash-surface)] p-6 md:p-8">
                       <div className="mb-6 flex items-center justify-between gap-4">
-                        <span className="rounded-pill border border-line bg-[#242424] px-3 py-1 text-[12px] font-medium text-muted">
+                        <span className="rounded-sm border border-line bg-[var(--dash-elevated)] px-3 py-1 text-[12px] font-medium text-muted">
                           System
                         </span>
                         {previewVersion ? (
@@ -1556,7 +1556,7 @@ export default function RepoEditorShell({
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-xl border border-line bg-[#0F0F0F] px-5 py-4">
+                    <div className="mt-4 rounded-sm border border-line bg-[var(--dash-surface)] px-5 py-4">
                       <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted">
                         <span className="font-medium text-ink">Placeholder</span>
                         <span>{model}</span>
@@ -1596,7 +1596,7 @@ export default function RepoEditorShell({
               ) : null}
 
               {isPreviewing ? (
-                <div className="flex items-center justify-between gap-3 rounded-[20px] border border-line bg-[#F9FAFB] px-4 py-3">
+                <div className="flex items-center justify-between gap-3 rounded-[20px] border border-line bg-[var(--dash-elevated)] px-4 py-3">
                   <p className="text-sm text-muted">
                     Previewing v{selectedVersionNumber} - this is read only
                   </p>
@@ -1678,7 +1678,7 @@ export default function RepoEditorShell({
                       {isRunning ? "Running..." : "Run"}
                     </button>
                   </form>
-                  <div className="min-h-32 rounded-[16px] border border-line bg-[#FCFBF7] p-4">
+                  <div className="min-h-32 rounded-[16px] border border-line bg-[var(--dash-bg)] p-4">
                     <p className={`whitespace-pre-wrap text-sm leading-7 ${playgroundError ? "text-error" : "text-muted"}`}>
                       {isRunning ? "Running..." : playgroundError || playgroundResponse || "No response yet."}
                     </p>
@@ -1729,7 +1729,7 @@ export default function RepoEditorShell({
                   </label>
 
                   {deploymentDetails ? (
-                    <div className="rounded-[16px] border border-line bg-[#FCFBF7] p-4">
+                    <div className="rounded-[16px] border border-line bg-[var(--dash-bg)] p-4">
                       <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Live endpoint</p>
                       <code className="mt-3 block break-all rounded-md border border-line bg-white px-3 py-2 font-mono text-xs font-semibold text-accent">
                         POST {deploymentDetails.endpoint_url}
@@ -1783,7 +1783,7 @@ export default function RepoEditorShell({
               </div>
 
               {evalRunSummary ? (
-                <div className="rounded-[16px] border border-line bg-[#FCFBF7] px-4 py-3">
+                <div className="rounded-[16px] border border-line bg-[var(--dash-bg)] px-4 py-3">
                   <p className="font-mono text-sm text-ink">
                     {evalRunSummary.score} / {evalRunSummary.total} passed
                   </p>
@@ -1811,8 +1811,8 @@ export default function RepoEditorShell({
                               <span
                                 className={`rounded-sm border px-2 py-1 font-mono text-[11px] ${
                                   result.passed
-                                    ? "border-[#0F2A1A] text-[#4CAF82]"
-                                    : "border-[#2A0F0F] text-error"
+                                    ? "border-[var(--dash-success)] text-success"
+                                    : "border-[var(--dash-error)] text-error"
                                 }`}
                               >
                                 {result.verdict}
@@ -2002,10 +2002,10 @@ function AnalyticsLogsPanel({
   ];
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-[#0F0F0F] p-5">
+    <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--dash-bg)] p-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-line bg-[#141414] p-4">
+          <div key={stat.label} className="rounded-sm border border-line bg-[var(--dash-surface)] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{stat.label}</p>
             <p className="mt-2 text-[24px] font-bold tracking-[-0.03em] text-ink">{stat.value}</p>
             <p className="mt-1 text-[12px] text-muted">{stat.detail}</p>
@@ -2013,24 +2013,24 @@ function AnalyticsLogsPanel({
         ))}
       </div>
 
-      <section className="mt-5 overflow-hidden rounded-xl border border-line bg-[#141414]">
+      <section className="mt-5 overflow-hidden rounded-sm border border-line bg-[var(--dash-surface)]">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
             <p className="text-[14px] font-semibold text-ink">Recent requests</p>
             <p className="mt-1 text-[12px] text-muted">Latest runtime activity for this repo</p>
           </div>
-          <span className="rounded-pill bg-[#242424] px-2.5 py-1 text-[11px] text-muted">{requestLogs.length} shown</span>
+          <span className="rounded-sm bg-[var(--dash-elevated)] px-2.5 py-1 text-[11px] text-muted">{requestLogs.length} shown</span>
         </div>
         {requestLogs.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[620px] text-left">
-              <thead className="bg-[#1A1A1A] text-[11px] uppercase tracking-[0.1em] text-muted">
+              <thead className="bg-[var(--dash-elevated)] text-[11px] uppercase tracking-[0.1em] text-muted">
                 <tr><th className="px-5 py-3 font-medium">Time</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 font-medium">Latency</th><th className="px-5 py-3 font-medium">Tokens</th></tr>
               </thead>
               <tbody>
                 {requestLogs.map((log) => {
                   const success = !log.status || log.status.toLowerCase() === "success";
-                  return <tr key={log.id} className="border-t border-line text-[13px] text-muted"><td className="px-5 py-3">{formatDateTime(log.created_at)}</td><td className="px-5 py-3"><span className={`rounded-pill px-2 py-0.5 text-[11px] ${success ? "bg-[#0F2A1A] text-success" : "bg-[#2A1717] text-error"}`}>{log.status || "success"}</span></td><td className="px-5 py-3 font-mono text-[12px] text-ink">{log.latency_ms != null ? `${log.latency_ms}ms` : "—"}</td><td className="px-5 py-3 font-mono text-[12px] text-ink">{(log.token_count ?? 0).toLocaleString()}</td></tr>;
+                  return <tr key={log.id} className="border-t border-line text-[13px] text-muted"><td className="px-5 py-3">{formatDateTime(log.created_at)}</td><td className="px-5 py-3"><span className={`rounded-pill px-2 py-0.5 text-[11px] ${success ? "bg-[var(--dash-success-soft)] text-success" : "bg-[var(--dash-danger-soft)] text-error"}`}>{log.status || "success"}</span></td><td className="px-5 py-3 font-mono text-[12px] text-ink">{log.latency_ms != null ? `${log.latency_ms}ms` : "—"}</td><td className="px-5 py-3 font-mono text-[12px] text-ink">{(log.token_count ?? 0).toLocaleString()}</td></tr>;
                 })}
               </tbody>
             </table>
@@ -2473,7 +2473,7 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
   if (row.kind === "delete") {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-        <div className={`${rowClasses} bg-[#2A0F0F] text-[#F87171]`}>
+        <div className={`${rowClasses} bg-[var(--dash-danger-soft)] text-error`}>
           <span className="mr-2 text-error">-</span>
           <span>{row.oldLine || " "}</span>
         </div>
@@ -2486,7 +2486,7 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
     return (
       <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
         <div className={rowClasses} />
-        <div className={`${rowClasses} bg-[#0F2A1A] text-[#4CAF82]`}>
+        <div className={`${rowClasses} bg-[var(--dash-success-soft)] text-success`}>
           <span className="mr-2 text-success">+</span>
           <span>{row.newLine || " "}</span>
         </div>
@@ -2496,11 +2496,11 @@ function DiffRowView({ row }: { row: DiffLineRow }) {
 
   return (
     <div className="grid grid-cols-2 gap-px border-b border-line/60 last:border-b-0">
-      <div className={`${rowClasses} bg-[#2A0F0F] text-[#F87171]`}>
+      <div className={`${rowClasses} bg-[var(--dash-danger-soft)] text-error`}>
         <span className="mr-2 text-error">-</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="old" />
       </div>
-      <div className={`${rowClasses} bg-[#0F2A1A] text-[#4CAF82]`}>
+      <div className={`${rowClasses} bg-[var(--dash-success-soft)] text-success`}>
         <span className="mr-2 text-success">+</span>
         <InlineDiffText oldLine={row.oldLine} newLine={row.newLine} side="new" />
       </div>
@@ -2535,7 +2535,7 @@ function InlineDiffText({
             return (
               <span
                 key={index}
-                className="rounded-sm bg-[#2A0F0F] px-0.5 text-[#F87171]"
+                className="rounded-sm bg-[var(--dash-danger-soft)] px-0.5 text-error"
               >
                 {text}
               </span>
@@ -2553,7 +2553,7 @@ function InlineDiffText({
           return (
             <span
               key={index}
-              className="rounded-sm bg-[#0F2A1A] px-0.5 text-[#4CAF82]"
+              className="rounded-sm bg-[var(--dash-success-soft)] px-0.5 text-success"
             >
               {text}
             </span>

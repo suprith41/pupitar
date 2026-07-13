@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast } from "../fork-modal";
 import { ExploreNavbar } from "@/components/explore-navbar";
+import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
 
 type PublicRepo = {
   id: string;
@@ -82,7 +83,23 @@ function renderPromptContent(text: string) {
   return blocks.length ? blocks : <p className="text-[15px] text-[#A0A0A0]">No content yet.</p>;
 }
 
-export default function PublicRepoShell({
+export default function PublicRepoShell(props: {
+  repo: PublicRepo;
+  versions: PublicVersion[];
+  initialStarred: boolean;
+  initialForkedRepoId: string | null;
+  userEmail: string | null;
+  isAuthenticated: boolean;
+  initialNote?: string | null;
+}) {
+  return (
+    <DashboardThemeProvider>
+      <PublicRepoShellContent {...props} />
+    </DashboardThemeProvider>
+  );
+}
+
+function PublicRepoShellContent({
   repo,
   versions,
   initialStarred,
@@ -170,7 +187,7 @@ export default function PublicRepoShell({
   }
 
   return (
-    <main className="pupitar-dashboard min-h-screen bg-[#0F0F0F] px-5 py-6 text-[#F0F0F0] md:px-10 md:py-8">
+    <main className="min-h-screen bg-[var(--dash-bg)] px-5 py-6 text-[var(--dash-ink)] md:px-10 md:py-8">
       <div className="mx-auto w-full max-w-[1280px]">
         <ExploreNavbar isAuthenticated={isAuthenticated} userEmail={userEmail} />
         <Link href="/explore" className="mt-6 inline-flex text-[13px] font-medium text-[#2067FF] transition-colors hover:text-[#2F6BFF]">← Back to Explore</Link>

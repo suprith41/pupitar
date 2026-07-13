@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast, type ForkTarget } from "./fork-modal";
 import { Sidebar } from "../dashboard/dashboard-shell";
+import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
 
 export type ExploreRepo = {
   id: string;
@@ -40,7 +41,20 @@ const FILTERS = [
 
 const ICON_COLORS = ["#2067FF", "#4CAF82", "#F87171", "#8B5CF6", "#F59E0B"];
 
-export default function ExploreShell({
+export default function ExploreShell(props: {
+  repos: ExploreRepo[];
+  userEmail: string | null;
+  isAuthenticated: boolean;
+  initialNote?: string | null;
+}) {
+  return (
+    <DashboardThemeProvider>
+      <ExploreShellContent {...props} />
+    </DashboardThemeProvider>
+  );
+}
+
+function ExploreShellContent({
   repos: initialRepos,
   userEmail,
   isAuthenticated,
@@ -161,7 +175,7 @@ export default function ExploreShell({
   }
 
   return (
-    <div className="pupitar-dashboard flex min-h-screen bg-[#0F0F0F] text-[#F0F0F0]">
+    <div className="flex min-h-screen bg-[var(--dash-bg)] text-[var(--dash-ink)]">
       <div className="hidden md:block">
         <Sidebar userEmail={userEmail} onSignOut={signOut} />
       </div>

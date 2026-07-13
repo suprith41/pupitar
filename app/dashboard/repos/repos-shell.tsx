@@ -30,23 +30,29 @@ type ReposShellProps = {
 };
 
 const T = {
-  bg: "#0F0F0F",
-  surface: "#1A1A1A",
-  ink: "#F0F0F0",
-  muted: "#A0A0A0",
-  subtlest: "#606060",
-  line: "#2A2A2A",
-  accent: "#2067FF",
-  accentHover: "#2F6BFF",
-  accentLight: "#1A2A4A",
-  hover: "#242424",
-  chip: "#242424",
+  bg: "var(--dash-bg)",
+  surface: "var(--dash-surface)",
+  ink: "var(--dash-ink)",
+  muted: "var(--dash-muted)",
+  subtlest: "var(--dash-subtle)",
+  line: "var(--dash-line)",
+  accent: "var(--dash-accent)",
+  accentHover: "var(--dash-accent-hover)",
+  accentLight: "var(--dash-accent-soft)",
+  hover: "var(--dash-hover)",
+  chip: "var(--dash-elevated)",
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace',
   dm: '"DM Sans", Arial, sans-serif'
 } as const;
 
 const VIEW_STORAGE_KEY = "pupitar-repos-view";
-const ICON_COLORS = ["#2067FF", "#4CAF82", "#F87171", "#606060", "#2F6BFF"] as const;
+const ICON_COLORS = [
+  "var(--dash-accent)",
+  "var(--dash-success)",
+  "var(--dash-error)",
+  "var(--dash-subtle)",
+  "var(--dash-accent-hover)"
+] as const;
 
 function truncatePreview(value: string) {
   const trimmed = value.trim();
@@ -380,7 +386,7 @@ function RepoGridCard({
         <div
           style={{
             borderRadius: 4,
-            background: "#0F0F0F",
+            background: T.bg,
             border: `1px solid ${T.line}`,
             padding: "8px 12px",
             fontFamily: T.mono,
@@ -508,7 +514,7 @@ export default function ReposShell({ canCreateRepos, repos, initialNote }: Repos
         }}
       />
 
-      <main style={{ flex: 1, minWidth: 0, padding: 32 }}>
+      <main style={{ flex: 1, minWidth: 0, padding: 24 }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div
             style={{

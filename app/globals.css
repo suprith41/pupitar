@@ -201,7 +201,7 @@ body {
 .pupitar-dashboard section.relative.z-10 input::placeholder {
   color: #606060 !important;
 }
-.pupitar-dashboard main > p {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > p {
   color: #f0f0f0 !important;
 }
 .pupitar-dashboard .auth-field:focus-visible {
@@ -209,49 +209,393 @@ body {
 }
 
 /* Onboarding card and form overrides */
-.pupitar-dashboard main > div {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div {
   background: rgba(26, 26, 26, 0.72) !important;
   border-color: #2a2a2a !important;
 }
-.pupitar-dashboard main > div h1,
-.pupitar-dashboard main > div h2,
-.pupitar-dashboard main > div h3,
-.pupitar-dashboard main > div p,
-.pupitar-dashboard main > div span,
-.pupitar-dashboard main > div label {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div h1,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div h2,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div h3,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div p,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div span,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div label {
   color: #f0f0f0 !important;
 }
-.pupitar-dashboard main > div input,
-.pupitar-dashboard main > div select,
-.pupitar-dashboard main > div textarea {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div input,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div select,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div textarea {
   background-color: #0f0f0f !important;
   color: #f0f0f0 !important;
   border-color: #2a2a2a !important;
 }
-.pupitar-dashboard main > div input::placeholder,
-.pupitar-dashboard main > div textarea::placeholder {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div input::placeholder,
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div textarea::placeholder {
   color: #606060 !important;
 }
-.pupitar-dashboard main > div button {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button {
   color: #f0f0f0 !important;
   border-color: #2a2a2a !important;
 }
-.pupitar-dashboard main > div button:hover {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button:hover {
   border-color: #f0f0f0 !important;
 }
-.pupitar-dashboard main > div button[style*="text-align: left"] {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button[style*="text-align: left"] {
   background-color: #1a1a1a !important;
   border-color: #2a2a2a !important;
 }
-.pupitar-dashboard main > div button[style*="text-align: left"]:hover {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button[style*="text-align: left"]:hover {
   background-color: #242424 !important;
   border-color: #444444 !important;
 }
-.pupitar-dashboard main > div button[style*="text-align: left"][style*="border: 2px"],
-.pupitar-dashboard main > div button[style*="text-align: left"][style*="background: rgb(238, 244, 255)"],
-.pupitar-dashboard main > div button[style*="text-align: left"][style*="background-color: rgb(238, 244, 255)"] {
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button[style*="text-align: left"][style*="border: 2px"],
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button[style*="text-align: left"][style*="background: rgb(238, 244, 255)"],
+.pupitar-dashboard:not(.dashboard-developer-ui) main > div button[style*="text-align: left"][style*="background-color: rgb(238, 244, 255)"] {
   background-color: #1a2a4a !important;
   border-color: #2067ff !important;
+}
+
+/* Dashboard-only GitHub developer UI: brutal borders, minimal surfaces. */
+.dashboard-developer-ui[data-dashboard-theme="dark"] {
+  color-scheme: dark;
+  --dash-bg: #0d1117;
+  --dash-surface: #161b22;
+  --dash-elevated: #21262d;
+  --dash-hover: #1f242c;
+  --dash-ink: #e6edf3;
+  --dash-muted: #8b949e;
+  --dash-subtle: #6e7681;
+  --dash-line: #30363d;
+  --dash-accent: #2f81f7;
+  --dash-accent-hover: #58a6ff;
+  --dash-accent-soft: #172b4d;
+  --dash-success: #3fb950;
+  --dash-success-soft: #12261e;
+  --dash-error: #f85149;
+  --dash-danger-soft: #2d1618;
+}
+
+.dashboard-developer-ui[data-dashboard-theme="light"] {
+  color-scheme: light;
+  --dash-bg: #f6f8fa;
+  --dash-surface: #ffffff;
+  --dash-elevated: #f6f8fa;
+  --dash-hover: #f3f4f6;
+  --dash-ink: #1f2328;
+  --dash-muted: #59636e;
+  --dash-subtle: #6e7781;
+  --dash-line: #d0d7de;
+  --dash-accent: #0969da;
+  --dash-accent-hover: #0550ae;
+  --dash-accent-soft: #ddf4ff;
+  --dash-success: #1a7f37;
+  --dash-success-soft: #dafbe1;
+  --dash-error: #cf222e;
+  --dash-danger-soft: #ffebe9;
+}
+
+.pupitar-dashboard.dashboard-developer-ui {
+  min-height: 100vh;
+  background: var(--dash-bg) !important;
+  color: var(--dash-ink) !important;
+  font-size: 14px;
+}
+
+.dashboard-developer-ui ::selection {
+  background: var(--dash-accent-soft);
+  color: var(--dash-ink);
+}
+
+.dashboard-developer-ui ::-webkit-scrollbar-track {
+  background: var(--dash-bg);
+}
+
+.dashboard-developer-ui ::-webkit-scrollbar-thumb {
+  background: var(--dash-line);
+  border-radius: 0;
+}
+
+.dashboard-developer-ui input::placeholder,
+.dashboard-developer-ui textarea::placeholder,
+.dashboard-developer-ui select::placeholder {
+  color: var(--dash-subtle);
+}
+
+.dashboard-developer-ui .bg-bg,
+.dashboard-developer-ui .bg-\[var\(--dash-bg\)\],
+.dashboard-developer-ui .bg-\[\#0F0F0F\],
+.dashboard-developer-ui .bg-\[\#FCFBF7\] {
+  background-color: var(--dash-bg) !important;
+}
+
+.dashboard-developer-ui .bg-surface,
+.dashboard-developer-ui .bg-panel,
+.dashboard-developer-ui .bg-white,
+.dashboard-developer-ui .bg-nav,
+.dashboard-developer-ui .bg-\[var\(--dash-surface\)\],
+.dashboard-developer-ui .bg-\[\#141414\],
+.dashboard-developer-ui .bg-\[\#1A1A1A\] {
+  background-color: var(--dash-surface) !important;
+}
+
+.dashboard-developer-ui .bg-\[var\(--dash-elevated\)\],
+.dashboard-developer-ui .bg-\[\#242424\],
+.dashboard-developer-ui .bg-\[\#F9FAFB\],
+.dashboard-developer-ui .bg-\[\#F5F5F5\] {
+  background-color: var(--dash-elevated) !important;
+}
+
+.dashboard-developer-ui .bg-\[\#1A2A4A\] {
+  background-color: var(--dash-accent-soft) !important;
+}
+
+.dashboard-developer-ui .bg-\[\#0F2A1A\] {
+  background-color: var(--dash-success-soft) !important;
+}
+
+.dashboard-developer-ui .bg-\[\#2A1717\],
+.dashboard-developer-ui .bg-\[\#2A0F0F\] {
+  background-color: var(--dash-danger-soft) !important;
+}
+
+.dashboard-developer-ui .bg-accent {
+  background-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .text-ink {
+  color: var(--dash-ink) !important;
+}
+
+.dashboard-developer-ui .text-\[\#F0F0F0\] {
+  color: var(--dash-ink) !important;
+}
+
+.dashboard-developer-ui .text-muted,
+.dashboard-developer-ui .text-\[\#A0A0A0\] {
+  color: var(--dash-muted) !important;
+}
+
+.dashboard-developer-ui .text-line {
+  color: var(--dash-subtle) !important;
+}
+
+.dashboard-developer-ui .text-\[\#606060\] {
+  color: var(--dash-subtle) !important;
+}
+
+.dashboard-developer-ui .text-accent,
+.dashboard-developer-ui .text-\[\#2067FF\] {
+  color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .text-success,
+.dashboard-developer-ui .text-\[\#4CAF82\] {
+  color: var(--dash-success) !important;
+}
+
+.dashboard-developer-ui .text-error,
+.dashboard-developer-ui .text-\[\#F87171\] {
+  color: var(--dash-error) !important;
+}
+
+.dashboard-developer-ui .border-line {
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui .border-accent {
+  border-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .border-\[\#2A2A2A\] {
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui .border-\[\#2067FF\] {
+  border-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .border-l-\[\#2067FF\] {
+  border-left-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .bg-\[\#2067FF\] {
+  background-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui .hover\:bg-\[\#2F6BFF\]:hover {
+  background-color: var(--dash-accent-hover) !important;
+}
+
+.dashboard-developer-ui .hover\:border-\[\#2067FF\]:hover,
+.dashboard-developer-ui .focus\:border-\[\#2067FF\]:focus {
+  border-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui main > div {
+  background: transparent !important;
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui main > div input,
+.dashboard-developer-ui main > div select,
+.dashboard-developer-ui main > div textarea {
+  background-color: var(--dash-bg) !important;
+  color: var(--dash-ink) !important;
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui main > div button[style*="text-align: left"] {
+  background-color: var(--dash-surface) !important;
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui main > div button[style*="text-align: left"]:hover {
+  background-color: var(--dash-hover) !important;
+  border-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui main > div button[style*="text-align: left"][style*="border: 2px"],
+.dashboard-developer-ui main > div button[style*="text-align: left"][style*="background: rgb(238, 244, 255)"],
+.dashboard-developer-ui main > div button[style*="text-align: left"][style*="background-color: rgb(238, 244, 255)"] {
+  background-color: var(--dash-accent-soft) !important;
+  border-color: var(--dash-accent) !important;
+}
+
+.dashboard-developer-ui aside,
+.dashboard-developer-ui main,
+.dashboard-developer-ui section,
+.dashboard-developer-ui header {
+  box-shadow: none !important;
+}
+
+.dashboard-developer-ui aside {
+  background: var(--dash-surface) !important;
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui button,
+.dashboard-developer-ui input,
+.dashboard-developer-ui select,
+.dashboard-developer-ui textarea {
+  border-radius: 4px !important;
+}
+
+.dashboard-developer-ui [class*="rounded-[20px]"],
+.dashboard-developer-ui [class*="rounded-[24px]"],
+.dashboard-developer-ui .rounded-xl,
+.dashboard-developer-ui .rounded-lg {
+  border-radius: 4px !important;
+}
+
+.dashboard-developer-ui [style*="border-radius: 8px"],
+.dashboard-developer-ui [style*="border-radius: 12px"] {
+  border-radius: 4px !important;
+}
+
+.dashboard-developer-ui aside[style*="width: 240px"] {
+  width: 220px !important;
+}
+
+.dashboard-developer-ui aside[style*="width: 240px"] > div:first-child {
+  padding: 16px 14px !important;
+}
+
+.dashboard-developer-ui main h1 {
+  letter-spacing: -0.025em;
+}
+
+.dashboard-developer-ui main h2,
+.dashboard-developer-ui main h3 {
+  letter-spacing: -0.015em;
+}
+
+.dashboard-developer-ui main table {
+  border-collapse: collapse;
+}
+
+.dashboard-developer-ui main code,
+.dashboard-developer-ui main pre,
+.dashboard-developer-ui main [class*="font-mono"] {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace !important;
+}
+
+.dashboard-developer-ui main button:not(.rounded-full):not(.rounded-pill) {
+  min-height: 32px;
+}
+
+.dashboard-developer-ui main > div > header,
+.dashboard-developer-ui main > header {
+  border-color: var(--dash-line) !important;
+}
+
+.dashboard-developer-ui .rounded-pill,
+.dashboard-developer-ui .rounded-full {
+  border-radius: 9999px !important;
+}
+
+.dashboard-developer-ui .shadow-zf,
+.dashboard-developer-ui .shadow-subtle,
+.dashboard-developer-ui .shadow-card,
+.dashboard-developer-ui .shadow-elevated,
+.dashboard-developer-ui .shadow-blue {
+  box-shadow: none !important;
+}
+
+.dashboard-developer-ui input:focus-visible,
+.dashboard-developer-ui textarea:focus-visible,
+.dashboard-developer-ui select:focus-visible,
+.dashboard-developer-ui button:focus-visible,
+.dashboard-developer-ui a:focus-visible {
+  outline: 2px solid var(--dash-accent);
+  outline-offset: 2px;
+  box-shadow: none !important;
+}
+
+.dashboard-theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-theme-option {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  text-align: left;
+  box-shadow: none;
+}
+
+.dashboard-theme-preview {
+  display: grid;
+  grid-template-columns: 30% 1fr;
+  grid-template-rows: 1fr 8px;
+  gap: 6px;
+  width: 100%;
+  height: 76px;
+  padding: 8px;
+  border: 1px solid;
+}
+
+.dashboard-theme-preview > span {
+  display: block;
+  border: 1px solid transparent;
+}
+
+.dashboard-theme-preview > span:first-child {
+  grid-row: 1 / 3;
+}
+
+.dashboard-theme-preview > span:last-child {
+  grid-column: 2;
+  width: 42%;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .dashboard-theme-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 a {

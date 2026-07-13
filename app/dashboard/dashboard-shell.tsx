@@ -44,17 +44,17 @@ type DashboardShellProps = {
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg: "#0F0F0F",
-  surface: "#1A1A1A",
-  ink: "#F0F0F0",
-  muted: "#A0A0A0",
-  line: "#2A2A2A",
-  accent: "#2067FF",
-  accentHover: "#2F6BFF",
-  accentLight: "#1A2A4A",
-  hover: "#242424",
-  error: "#F87171",
-  success: "#4CAF82",
+  bg: "var(--dash-bg, #0d1117)",
+  surface: "var(--dash-surface, #161b22)",
+  ink: "var(--dash-ink, #e6edf3)",
+  muted: "var(--dash-muted, #8b949e)",
+  line: "var(--dash-line, #30363d)",
+  accent: "var(--dash-accent, #2f81f7)",
+  accentHover: "var(--dash-accent-hover, #58a6ff)",
+  accentLight: "var(--dash-accent-soft, #172b4d)",
+  hover: "var(--dash-hover, #1f242c)",
+  error: "var(--dash-error, #f85149)",
+  success: "var(--dash-success, #3fb950)",
   dm: '"DM Sans", Arial, sans-serif'
 } as const;
 
@@ -223,7 +223,34 @@ const NAV_ITEMS = [
   { label: "Settings", icon: SettingsIcon, href: "/dashboard/settings" }
 ];
 
-function NavItem({ label, icon: Icon, href }: { label: string; icon: ComponentType; href: string }) {
+const SIDEBAR_STORAGE_KEY = "pupitar-dashboard-sidebar-collapsed";
+
+function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+      <rect x="3" y="3" width="14" height="14" rx="1" />
+      <path
+        d="M8 3v14M11 7l3 3-3 3"
+        style={{
+          transform: collapsed ? "rotate(180deg)" : undefined,
+          transformOrigin: "10px 10px"
+        }}
+      />
+    </svg>
+  );
+}
+
+function NavItem({
+  label,
+  icon: Icon,
+  href,
+  collapsed
+}: {
+  label: string;
+  icon: ComponentType;
+  href: string;
+  collapsed: boolean;
+}) {
   const pathname = usePathname();
   // Home is active when exactly on /dashboard; others match prefix
   const isActive =
@@ -238,10 +265,11 @@ function NavItem({ label, icon: Icon, href }: { label: string; icon: ComponentTy
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
+        justifyContent: collapsed ? "center" : "flex-start",
+        gap: collapsed ? 0 : 10,
         height: 36,
-        padding: "0 12px",
-        margin: "2px 8px",
+        padding: collapsed ? 0 : "0 12px",
+        margin: collapsed ? "3px 10px" : "2px 8px",
         borderLeft: isActive ? `2px solid ${T.accent}` : "2px solid transparent",
         borderRadius: 6,
         textDecoration: "none",
@@ -255,11 +283,13 @@ function NavItem({ label, icon: Icon, href }: { label: string; icon: ComponentTy
         overflow: "hidden",
         textOverflow: "ellipsis"
       }}
+      aria-label={label}
+      title={collapsed ? label : undefined}
     >
       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, flexShrink: 0 }}>
         <Icon />
       </span>
-      {label}
+      {!collapsed ? label : null}
     </Link>
   );
 }
@@ -275,7 +305,21 @@ export function Sidebar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHovered, setMenuHovered] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+  }, []);
+
+  function toggleSidebar() {
+    setCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      if (next) setMenuOpen(false);
+      return next;
+    });
+  }
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -291,7 +335,7 @@ export function Sidebar({
   return (
     <aside
       style={{
-        width: 240,
+        width: collapsed ? 64 : 220,
         flexShrink: 0,
         height: "100vh",
         position: "sticky",
@@ -300,22 +344,27 @@ export function Sidebar({
         flexDirection: "column",
         background: T.surface,
         borderRight: `1px solid ${T.line}`,
-        overflow: "hidden"
+        overflow: "visible",
+        transition: "width 180ms ease"
       }}
     >
       {/* Logo */}
       <div
         style={{
-          padding: "20px 16px 18px",
-          borderBottom: `1px solid ${T.line}`
+          padding: collapsed ? "16px 10px" : "16px 14px",
+          borderBottom: `1px solid ${T.line}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          gap: 8
         }}
       >
         <Link
-          href="/"
+          href="/dashboard"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: collapsed ? 0 : 8,
             fontFamily: T.dm,
             fontWeight: 700,
             fontSize: 16,
@@ -323,16 +372,70 @@ export function Sidebar({
             textDecoration: "none",
             lineHeight: 1
           }}
+          aria-label="Dashboard home"
+          title={collapsed ? "Dashboard home" : undefined}
         >
           <PupitarLogo size={18} />
-          Pupitar
+          {!collapsed ? "Pupitar" : null}
         </Link>
+        {!collapsed ? (
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 30,
+              height: 30,
+              padding: 0,
+              border: `1px solid ${T.line}`,
+              borderRadius: 4,
+              background: "transparent",
+              color: T.muted,
+              cursor: "pointer"
+            }}
+          >
+            <SidebarToggleIcon collapsed={false} />
+          </button>
+        ) : null}
       </div>
+
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Expand sidebar"
+          title="Expand sidebar"
+          style={{
+            position: "absolute",
+            top: 16,
+            left: "calc(100% - 1px)",
+            zIndex: 20,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            padding: 0,
+            border: `1px solid ${T.line}`,
+            borderRadius: 4,
+            background: T.surface,
+            color: T.muted,
+            cursor: "pointer",
+            boxShadow: "none"
+          }}
+        >
+          <SidebarToggleIcon collapsed />
+        </button>
+      ) : null}
 
       {/* Nav */}
       <nav style={{ flex: 1, paddingTop: 8, overflow: "hidden" }}>
         {NAV_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} />
+          <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
       </nav>
 
@@ -340,7 +443,7 @@ export function Sidebar({
       <div
         style={{
           borderTop: `1px solid ${T.line}`,
-          padding: "12px 12px 16px"
+          padding: collapsed ? "10px" : "12px 12px 16px"
         }}
       >
         {userEmail ? <div ref={menuRef} style={{ position: "relative" }}>
@@ -351,7 +454,7 @@ export function Sidebar({
                 position: "absolute",
                 bottom: "calc(100% + 8px)",
                 left: 0,
-                right: 0,
+                width: collapsed ? 220 : "100%",
                 background: T.surface,
                 border: `1px solid ${T.line}`,
                 borderRadius: 8,
@@ -402,9 +505,10 @@ export function Sidebar({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: collapsed ? 0 : 10,
               width: "100%",
-              padding: "8px 6px",
+              justifyContent: collapsed ? "center" : "flex-start",
+              padding: collapsed ? 6 : "8px 6px",
               borderRadius: 6,
               border: "none",
               background: menuHovered ? T.hover : T.bg,
@@ -433,8 +537,7 @@ export function Sidebar({
               {getEmailInitial(userEmail)}
             </div>
 
-            {/* Email */}
-            <span
+            {!collapsed ? <span
               style={{
                 flex: 1,
                 fontFamily: T.dm,
@@ -447,10 +550,10 @@ export function Sidebar({
               }}
             >
               {userEmail ?? "Account"}
-            </span>
+            </span> : null}
 
             {/* Chevron up/down */}
-            <span
+            {!collapsed ? <span
               style={{
                 fontFamily: T.dm,
                 fontSize: 11,
@@ -462,7 +565,7 @@ export function Sidebar({
               }}
             >
               ↑
-            </span>
+            </span> : null}
           </button>
         </div> : (
           <Link

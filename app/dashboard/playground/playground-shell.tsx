@@ -35,17 +35,17 @@ type PlaygroundShellProps = {
 };
 
 const T = {
-  bg: "#0F0F0F",
-  surface: "#1A1A1A",
-  ink: "#F0F0F0",
-  muted: "#A0A0A0",
-  line: "#2A2A2A",
-  lineSoft: "#242424",
-  accent: "#2067FF",
-  accentHover: "#2F6BFF",
-  accentLight: "#1A2A4A",
-  ghost: "#242424",
-  error: "#F87171",
+  bg: "var(--dash-bg)",
+  surface: "var(--dash-surface)",
+  ink: "var(--dash-ink)",
+  muted: "var(--dash-muted)",
+  line: "var(--dash-line)",
+  lineSoft: "var(--dash-elevated)",
+  accent: "var(--dash-accent)",
+  accentHover: "var(--dash-accent-hover)",
+  accentLight: "var(--dash-accent-soft)",
+  ghost: "var(--dash-elevated)",
+  error: "var(--dash-error)",
   dm: '"DM Sans", Arial, sans-serif',
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace'
 } as const;

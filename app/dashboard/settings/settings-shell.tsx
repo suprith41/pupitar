@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { Sidebar } from "../dashboard-shell";
 import type { ReactNode } from "react";
+import { useDashboardTheme, type DashboardTheme } from "@/components/dashboard-theme-provider";
 
 type Profile = {
   role: string | null;
@@ -33,17 +34,17 @@ type SettingsShellProps = {
 };
 
 const T = {
-  bg: "#0F0F0F",
-  surface: "#1A1A1A",
-  ink: "#F0F0F0",
-  muted: "#A0A0A0",
-  line: "#2A2A2A",
-  danger: "#B42318",
-  dangerBg: "#2A0F0F",
-  accent: "#2067FF",
-  accentHover: "#2F6BFF",
-  success: "#4CAF82",
-  lineSoft: "#242424",
+  bg: "var(--dash-bg)",
+  surface: "var(--dash-surface)",
+  ink: "var(--dash-ink)",
+  muted: "var(--dash-muted)",
+  line: "var(--dash-line)",
+  danger: "var(--dash-error)",
+  dangerBg: "var(--dash-danger-soft)",
+  accent: "var(--dash-accent)",
+  accentHover: "var(--dash-accent-hover)",
+  success: "var(--dash-success)",
+  lineSoft: "var(--dash-elevated)",
   dm: '"DM Sans", Arial, sans-serif',
   mono: '"JetBrains Mono", "SFMono-Regular", Consolas, monospace'
 } as const;
@@ -315,6 +316,7 @@ function DeleteConfirmModal({
 
 export default function SettingsShell({ canCreateRepos: _canCreateRepos, data }: SettingsShellProps) {
   const router = useRouter();
+  const { theme, setTheme } = useDashboardTheme();
   const [userEmail, setUserEmail] = useState<string | null>(data.email);
   const [role, setRole] = useState<string>(data.profile?.role ?? "");
   const [accountType, setAccountType] = useState<"solo" | "team">(
@@ -499,6 +501,48 @@ export default function SettingsShell({ canCreateRepos: _canCreateRepos, data }:
             >
               Settings
             </h1>
+
+            <Section title="Appearance">
+              <p style={{ margin: "0 0 16px", fontFamily: T.dm, fontSize: 13, lineHeight: 1.6, color: T.muted }}>
+                Choose a complete dashboard theme. Your selection is saved on this device.
+              </p>
+              <div className="dashboard-theme-options">
+                {(["dark", "light"] as DashboardTheme[]).map((option) => {
+                  const active = theme === option;
+                  const dark = option === "dark";
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setTheme(option)}
+                      aria-pressed={active}
+                      className="dashboard-theme-option"
+                      style={{
+                        border: `2px solid ${active ? T.accent : T.line}`,
+                        background: T.surface,
+                        color: T.ink
+                      }}
+                    >
+                      <span
+                        className="dashboard-theme-preview"
+                        style={{
+                          background: dark ? "#0d1117" : "#ffffff",
+                          borderColor: dark ? "#30363d" : "#d0d7de"
+                        }}
+                      >
+                        <span style={{ background: dark ? "#161b22" : "#f6f8fa", borderColor: dark ? "#30363d" : "#d0d7de" }} />
+                        <span style={{ background: dark ? "#21262d" : "#ffffff", borderColor: dark ? "#30363d" : "#d0d7de" }} />
+                        <span style={{ background: dark ? "#2f81f7" : "#0969da" }} />
+                      </span>
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%" }}>
+                        <span style={{ fontFamily: T.dm, fontSize: 14, fontWeight: 700, textTransform: "capitalize" }}>{option}</span>
+                        <span style={{ fontFamily: T.mono, fontSize: 11, color: active ? T.accent : T.muted }}>{active ? "ACTIVE" : "SELECT"}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Section>
 
             <Section title="Profile">
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
