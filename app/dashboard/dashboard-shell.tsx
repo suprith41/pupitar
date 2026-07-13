@@ -125,6 +125,24 @@ function HomeIcon() {
   );
 }
 
+function ExploreIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: 16, height: 16 }}
+    >
+      <circle cx="10" cy="10" r="7" />
+      <path d="m12.8 7.2-1.7 3.9-3.9 1.7 1.7-3.9 3.9-1.7z" />
+    </svg>
+  );
+}
+
 function ReposIcon() {
   return (
     <svg
@@ -198,6 +216,7 @@ function SettingsIcon() {
 
 const NAV_ITEMS = [
   { label: "Home", icon: HomeIcon, href: "/dashboard" },
+  { label: "Explore", icon: ExploreIcon, href: "/explore" },
   { label: "Repos", icon: ReposIcon, href: "/dashboard/repos" },
   { label: "Playground", icon: PlaygroundIcon, href: "/dashboard/playground" },
   { label: "Analytics", icon: AnalyticsIcon, href: "/dashboard/analytics" },
@@ -324,7 +343,7 @@ export function Sidebar({
           padding: "12px 12px 16px"
         }}
       >
-        <div ref={menuRef} style={{ position: "relative" }}>
+        {userEmail ? <div ref={menuRef} style={{ position: "relative" }}>
           {/* Dropdown */}
           {menuOpen && (
             <div
@@ -445,7 +464,26 @@ export function Sidebar({
               ↑
             </span>
           </button>
-        </div>
+        </div> : (
+          <Link
+            href="/login"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 36,
+              borderRadius: 6,
+              border: `1px solid ${T.line}`,
+              color: T.ink,
+              fontFamily: T.dm,
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: "none"
+            }}
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </aside>
   );

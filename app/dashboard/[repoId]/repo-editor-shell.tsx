@@ -25,12 +25,24 @@ type BranchOption = {
 
 const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"] as const;
 const defaultModel = models[0];
+const COMMON_REPO_TAGS = [
+  "customer-support",
+  "coding-assistant",
+  "data-extraction",
+  "summarization",
+  "classification",
+  "translation",
+  "qa-bot",
+  "agent",
+  "other"
+] as const;
 
 type RepoEditorShellProps = {
   repo: Repo;
   initialVersions: PromptVersion[];
   initialBranches: BranchRow[];
   initialEvalCases: EvalCaseRow[];
+  initialTags: string[];
   deploymentVersionId?: string | null;
   currentUserEmail?: string | null;
   currentUserLabel?: string;
@@ -259,6 +271,12 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function releaseLabelClassName(label: string) {
+  if (label.toLowerCase() === "prod") return "bg-[#0F2A1A] text-[#4CAF82]";
+  if (label.toLowerCase() === "dev") return "bg-[#1A2A4A] text-[#2067FF]";
+  return "bg-[#242424] text-[#A0A0A0]";
+}
+
 function getVersionDisplayNumber(version: PromptVersion, orderedVersions: PromptVersion[]) {
   const newestFirstIndex = orderedVersions.findIndex((item) => item.id === version.id);
   return newestFirstIndex === -1 ? orderedVersions.length : orderedVersions.length - newestFirstIndex;
@@ -366,6 +384,7 @@ export default function RepoEditorShell({
   initialVersions,
   initialBranches,
   initialEvalCases,
+  initialTags,
   deploymentVersionId = null,
   currentUserEmail = null,
   currentUserLabel = "account"
@@ -389,6 +408,15 @@ export default function RepoEditorShell({
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(initialBranch.id);
   const [content, setContent] = useState(initialSeedVersion?.content ?? "");
   const [commitMessage, setCommitMessage] = useState("");
+  const [labelVersionId, setLabelVersionId] = useState<string | null>(null);
+  const [labelDraft, setLabelDraft] = useState("");
+  const [labelSaving, setLabelSaving] = useState(false);
+  const [labelError, setLabelError] = useState("");
+  const [repoTags, setRepoTags] = useState(initialTags);
+  const [tagInput, setTagInput] = useState("");
+  const [isTagPanelOpen, setIsTagPanelOpen] = useState(false);
+  const [tagMutation, setTagMutation] = useState<string | null>(null);
+  const [tagError, setTagError] = useState("");
   const [model, setModel] = useState(initialSeedVersion?.model ?? defaultModel);
   const [temperature, setTemperature] = useState(initialSeedVersion?.temperature ?? 0.7);
   const [maxTokens, setMaxTokens] = useState(initialSeedVersion?.max_tokens ?? 512);
@@ -535,7 +563,7 @@ export default function RepoEditorShell({
         parent_version_id: activeVersionId
       })
       .select(
-        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, release_label, created_at"
       )
       .single();
 
@@ -558,6 +586,56 @@ export default function RepoEditorShell({
     }
     commitFeedbackTimer.current = setTimeout(() => setCommitFeedback(false), 1500);
     return data;
+  }
+
+  async function addTag() {
+    const tag = tagInput.trim().toLowerCase();
+    if (!tag || repoTags.includes(tag)) {
+      setTagInput("");
+      return;
+    }
+    setTagMutation(tag);
+    setTagError("");
+    const { error: insertError } = await createClient().from("repo_tags").insert({ repo_id: repo.id, tag });
+    setTagMutation(null);
+    if (insertError) {
+      setTagError(insertError.message);
+      return;
+    }
+    setRepoTags((current) => [...current, tag]);
+    setTagInput("");
+  }
+
+  async function removeTag(tag: string) {
+    setTagMutation(tag);
+    setTagError("");
+    const { error: deleteError } = await createClient().from("repo_tags").delete().eq("repo_id", repo.id).eq("tag", tag);
+    setTagMutation(null);
+    if (deleteError) {
+      setTagError(deleteError.message);
+      return;
+    }
+    setRepoTags((current) => current.filter((item) => item !== tag));
+  }
+
+  async function saveReleaseLabel(versionId: string) {
+    const nextLabel = labelDraft.trim();
+    if (!nextLabel) return;
+    setLabelSaving(true);
+    setLabelError("");
+    const { error: updateError } = await createClient()
+      .from("prompt_versions")
+      .update({ release_label: nextLabel })
+      .eq("id", versionId)
+      .eq("repo_id", repo.id);
+    setLabelSaving(false);
+    if (updateError) {
+      setLabelError(updateError.message);
+      return;
+    }
+    setVersions((current) => current.map((version) => version.id === versionId ? { ...version, release_label: nextLabel } : version));
+    setLabelVersionId(null);
+    setLabelDraft("");
   }
 
   async function onCommit(event: FormEvent<HTMLFormElement>) {
@@ -717,7 +795,7 @@ export default function RepoEditorShell({
     const { data, error: fetchError } = await supabase
       .from("prompt_versions")
       .select(
-        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+        "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, release_label, created_at"
       )
       .eq("repo_id", repo.id)
       .order("created_at", { ascending: false });
@@ -1075,7 +1153,7 @@ export default function RepoEditorShell({
           eval_total: mergeFlow.summary?.total ?? null
         })
         .select(
-          "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+          "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, release_label, created_at"
         )
         .single();
 
@@ -1135,8 +1213,50 @@ export default function RepoEditorShell({
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
+          <div className="relative flex min-w-0 items-center gap-2">
             <h1 className="text-[24px] font-bold tracking-[-0.03em] text-ink">{repo.name}</h1>
+            <button
+              type="button"
+              onClick={() => setIsTagPanelOpen((current) => !current)}
+              aria-label="Manage repo tags"
+              aria-expanded={isTagPanelOpen}
+              className="rounded-full border border-line bg-white p-2 text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              <GearIcon />
+            </button>
+            {isTagPanelOpen ? (
+              <div className="absolute left-0 top-[calc(100%+10px)] z-30 w-[340px] rounded-lg border border-line bg-white p-4 shadow-elevated">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[13px] font-semibold text-ink">Repo tags</p>
+                  <button type="button" onClick={() => setIsTagPanelOpen(false)} aria-label="Close tag settings" className="text-lg leading-none text-muted hover:text-ink">×</button>
+                </div>
+                <div className="mt-3 flex min-h-7 flex-wrap gap-1.5">
+                  {repoTags.length ? repoTags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-pill bg-[#242424] px-2.5 py-1 text-[11px] text-muted">
+                      {tag}
+                      <button type="button" onClick={() => void removeTag(tag)} disabled={tagMutation === tag} aria-label={`Remove ${tag}`} className="text-sm leading-none text-muted hover:text-error disabled:opacity-50">×</button>
+                    </span>
+                  )) : <span className="text-[12px] text-muted">No tags yet.</span>}
+                </div>
+                <form className="mt-4" onSubmit={(event) => { event.preventDefault(); void addTag(); }}>
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted" htmlFor="repo-tag-input">Add tag</label>
+                  <input
+                    id="repo-tag-input"
+                    list="common-repo-tags"
+                    value={tagInput}
+                    onChange={(event) => setTagInput(event.target.value)}
+                    placeholder="Type a tag and press Enter"
+                    maxLength={48}
+                    className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+                  />
+                  <datalist id="common-repo-tags">
+                    {COMMON_REPO_TAGS.filter((tag) => !repoTags.includes(tag)).map((tag) => <option key={tag} value={tag} />)}
+                  </datalist>
+                </form>
+                {tagError ? <p role="alert" className="mt-2 text-[11px] text-error">{tagError}</p> : null}
+                <p className="mt-2 text-[11px] text-muted">Choose a suggestion or add a custom tag.</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -1147,12 +1267,6 @@ export default function RepoEditorShell({
               onCreateBranch={createBranch}
               onMergeIntoMain={startMergeGate}
             />
-            <button
-              type="button"
-              className="rounded-pill border border-line bg-white px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:text-ink"
-            >
-              No Tags
-            </button>
             <button
               type="button"
               className="rounded-pill border border-transparent px-3 py-1.5 text-sm font-medium text-error transition-colors hover:border-[#F9D6D3] hover:bg-[#FEF3F2]"
@@ -1222,9 +1336,13 @@ export default function RepoEditorShell({
                         isCurrent ? "bg-accent/10 border-l-[3px] border-l-accent" : ""
                       }`}
                     >
-                      <button
-                        type="button"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => loadVersion(version)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") loadVersion(version);
+                        }}
                         className="flex w-full items-start gap-3 px-4 py-4 text-left"
                       >
                         <span
@@ -1265,21 +1383,47 @@ export default function RepoEditorShell({
                             >
                               Diff
                             </button>
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                              }}
-                              aria-label="Release label placeholder"
-                              title="Release label coming soon"
-                              className="text-[11px] font-medium text-muted transition-colors hover:text-ink"
-                            >
-                              Release Label +
-                            </button>
+                            {version.release_label ? (
+                              <span className={`rounded-pill px-2 py-0.5 text-[10px] font-semibold ${releaseLabelClassName(version.release_label)}`}>
+                                {version.release_label}
+                              </span>
+                            ) : labelVersionId === version.id ? (
+                              <form
+                                className="flex min-w-0 items-center gap-1"
+                                onClick={(event) => event.stopPropagation()}
+                                onSubmit={(event) => { event.preventDefault(); void saveReleaseLabel(version.id); }}
+                              >
+                                <input
+                                  autoFocus
+                                  value={labelDraft}
+                                  onChange={(event) => setLabelDraft(event.target.value)}
+                                  maxLength={32}
+                                  aria-label={`Label for version ${versionNumber}`}
+                                  placeholder="prod"
+                                  className="h-6 min-w-0 w-[88px] rounded border border-line bg-white px-2 text-[11px] text-ink outline-none focus:border-accent"
+                                />
+                                <button type="submit" disabled={labelSaving || !labelDraft.trim()} className="text-[11px] font-semibold text-accent disabled:opacity-50">Save</button>
+                                <button type="button" onClick={() => { setLabelVersionId(null); setLabelDraft(""); setLabelError(""); }} className="text-[13px] text-muted hover:text-ink">×</button>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setLabelVersionId(version.id);
+                                  setLabelDraft("");
+                                  setLabelError("");
+                                }}
+                                className="text-[11px] font-medium text-muted transition-colors hover:text-accent"
+                              >
+                                + Label
+                              </button>
+                            )}
                           </div>
+                          {labelVersionId === version.id && labelError ? <p className="mt-1 text-[10px] text-error">{labelError}</p> : null}
                           <p className="sr-only">{isMainVersion ? "main branch version" : "branch version"}</p>
                         </div>
-                      </button>
+                      </div>
                     </div>
                   );
                 })}

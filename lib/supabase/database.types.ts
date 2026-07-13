@@ -43,6 +43,11 @@ export type Database = {
           name: string;
           description: string | null;
           is_public: boolean;
+          tags: string[];
+          star_count: number;
+          fork_count: number;
+          forked_from_repo_id: string | null;
+          updated_at: string;
           created_at: string;
         };
         Insert: {
@@ -51,6 +56,11 @@ export type Database = {
           name: string;
           description?: string | null;
           is_public?: boolean;
+          tags?: string[];
+          star_count?: number;
+          fork_count?: number;
+          forked_from_repo_id?: string | null;
+          updated_at?: string;
           created_at?: string;
         };
         Update: {
@@ -59,6 +69,11 @@ export type Database = {
           name?: string;
           description?: string | null;
           is_public?: boolean;
+          tags?: string[];
+          star_count?: number;
+          fork_count?: number;
+          forked_from_repo_id?: string | null;
+          updated_at?: string;
           created_at?: string;
         };
         Relationships: [];
@@ -76,6 +91,7 @@ export type Database = {
           parent_version_id: string | null;
           eval_score: number | null;
           eval_total: number | null;
+          release_label: string | null;
           created_at: string;
         };
         Insert: {
@@ -90,6 +106,7 @@ export type Database = {
           parent_version_id?: string | null;
           eval_score?: number | null;
           eval_total?: number | null;
+          release_label?: string | null;
           created_at?: string;
         };
         Update: {
@@ -104,6 +121,7 @@ export type Database = {
           parent_version_id?: string | null;
           eval_score?: number | null;
           eval_total?: number | null;
+          release_label?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -249,9 +267,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      repo_stars: {
+        Row: {
+          id: string;
+          repo_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          repo_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          repo_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      repo_forks: {
+        Row: {
+          id: string;
+          original_repo_id: string;
+          forked_repo_id: string;
+          forked_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          original_repo_id: string;
+          forked_repo_id: string;
+          forked_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          original_repo_id?: string;
+          forked_repo_id?: string;
+          forked_by?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      repo_tags: {
+        Row: {
+          id: string;
+          repo_id: string;
+          tag: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          repo_id: string;
+          tag: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          repo_id?: string;
+          tag?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: {
+      public_profiles: {
+        Row: {
+          id: string | null;
+          name: string | null;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {
+      fork_public_repo: {
+        Args: {
+          source_repo_id: string;
+          fork_name: string;
+          fork_description: string | null;
+        };
+        Returns: string;
+      };
+      toggle_repo_star: {
+        Args: { target_repo_id: string };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

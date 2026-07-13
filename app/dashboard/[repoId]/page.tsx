@@ -38,14 +38,15 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
     { data: versions, error: versionsError },
     { data: branches, error: branchesError },
     { data: evalCases, error: evalCasesError },
-    { data: deployment }
+    { data: deployment },
+    { data: repoTags }
   ] =
     await Promise.all([
       supabase.from("repos").select("id, name").eq("id", params.repoId).eq("owner_id", user.id).single(),
       supabase
         .from("prompt_versions")
         .select(
-          "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, created_at"
+          "id, repo_id, branch_id, content, model, temperature, max_tokens, commit_message, parent_version_id, eval_score, eval_total, release_label, created_at"
         )
         .eq("repo_id", params.repoId)
         .order("created_at", { ascending: false }),
@@ -63,7 +64,8 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
         .from("deployments")
         .select("active_version_id")
         .eq("repo_id", params.repoId)
-        .maybeSingle()
+        .maybeSingle(),
+      supabase.from("repo_tags").select("tag").eq("repo_id", params.repoId).order("created_at", { ascending: true })
     ]);
 
   if (repoError || !repo) {
@@ -120,6 +122,7 @@ export default async function RepoPage({ params }: { params: { repoId: string } 
           initialVersions={versions ?? []}
           initialBranches={branches ?? []}
           initialEvalCases={evalCases ?? []}
+          initialTags={(repoTags ?? []).map((row) => row.tag)}
           deploymentVersionId={deployment?.active_version_id ?? null}
           currentUserEmail={user.email ?? null}
           currentUserLabel={user.email?.split("@")[0] ?? "account"}

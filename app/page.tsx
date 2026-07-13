@@ -202,6 +202,9 @@ export default function Home() {
               <a className="transition-colors hover:text-accent" href="#program">
                 How it works
               </a>
+              <Link className="transition-colors hover:text-accent" href="/explore">
+                Explore
+              </Link>
               <a className="transition-colors hover:text-accent" href="#faqs">
                 FAQs
               </a>
