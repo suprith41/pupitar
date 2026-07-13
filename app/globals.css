@@ -715,6 +715,12 @@ body {
   color: var(--dash-accent);
 }
 
+@media (max-width: 980px) {
+  .playground-workspace {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
 @media (max-width: 640px) {
   .dashboard-theme-options {
     grid-template-columns: 1fr;

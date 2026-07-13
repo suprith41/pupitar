@@ -240,12 +240,14 @@ function OutputPill() {
 
 function PlaygroundPanel({
   variant,
+  compact,
   onChange,
   onAddMessage,
   onRun,
   onSave
 }: {
   variant: VariantState;
+  compact: boolean;
   onChange: (patch: Partial<VariantState>) => void;
   onAddMessage: () => void;
   onRun: () => void;
@@ -254,15 +256,15 @@ function PlaygroundPanel({
   const topCellStyle: CSSProperties = {
     flex: 1,
     minWidth: 0,
-    padding: "12px 14px"
+    padding: "9px 12px"
   };
 
   const textAreaStyle: CSSProperties = {
     width: "100%",
-    padding: "12px 14px",
+    padding: "11px 12px",
     border: `1px solid ${T.line}`,
-    borderRadius: 6,
-    background: T.surface,
+    borderRadius: 8,
+    background: T.bg,
     fontFamily: T.mono,
     fontSize: 13,
     color: T.ink,
@@ -273,11 +275,11 @@ function PlaygroundPanel({
   };
 
   const responseBoxStyle: CSSProperties = {
-    minHeight: 112,
-    padding: 16,
-    borderRadius: 6,
-    border: `1px solid ${T.lineSoft}`,
-    background: T.surface,
+    minHeight: compact ? 154 : 276,
+    padding: 14,
+    borderRadius: 8,
+    border: `1px solid ${T.line}`,
+    background: T.bg,
     fontFamily: T.mono,
     fontSize: 13,
     color: T.ink,
@@ -292,8 +294,8 @@ function PlaygroundPanel({
         width: "100%",
         background: T.surface,
         border: `1px solid ${T.line}`,
-        borderRadius: 8,
-        padding: 24,
+        borderRadius: 14,
+        padding: 18,
         boxSizing: "border-box"
       }}
     >
@@ -302,13 +304,14 @@ function PlaygroundPanel({
           display: "flex",
           alignItems: "stretch",
           border: `1px solid ${T.line}`,
-          borderRadius: 6,
+          borderRadius: 10,
           overflow: "hidden",
           background: T.surface,
-          marginBottom: 20
+          marginBottom: 16
         }}
       >
         <div style={{ ...topCellStyle, borderRight: `1px solid ${T.line}` }}>
+          <p style={{ margin: "0 0 4px", color: T.muted, fontFamily: T.mono, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Model</p>
           <select
             value={variant.model}
             onChange={(e) => onChange({ model: e.target.value as ModelChoice })}
@@ -331,6 +334,7 @@ function PlaygroundPanel({
         </div>
 
         <div style={{ ...topCellStyle, borderRight: `1px solid ${T.line}` }}>
+          <p style={{ margin: "0 0 4px", color: T.muted, fontFamily: T.mono, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Temperature</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <input
               type="range"
@@ -360,6 +364,7 @@ function PlaygroundPanel({
         </div>
 
         <div style={topCellStyle}>
+          <p style={{ margin: "0 0 4px", color: T.muted, fontFamily: T.mono, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Max tokens</p>
           <input
             type="number"
             min={1}
@@ -379,8 +384,17 @@ function PlaygroundPanel({
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div>
+      <div
+        className="playground-workspace"
+        style={{
+          display: "grid",
+          gridTemplateColumns: compact ? "minmax(0, 1fr)" : "minmax(0, 1.18fr) minmax(300px, 0.82fr)",
+          gap: 16,
+          alignItems: "start"
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
           <SectionLabel
             collapsed={!variant.systemOpen}
             onToggle={() => onChange({ systemOpen: !variant.systemOpen })}
@@ -394,7 +408,7 @@ function PlaygroundPanel({
               onChange={(e) => onChange({ systemMessage: e.target.value })}
               placeholder="You are a helpful assistant..."
               rows={5}
-              style={{ ...textAreaStyle, minHeight: 120, marginTop: 8 }}
+              style={{ ...textAreaStyle, minHeight: 112, marginTop: 8 }}
             />
           )}
         </div>
@@ -406,7 +420,7 @@ function PlaygroundPanel({
             onChange={(e) => onChange({ userMessage: e.target.value })}
             placeholder="Type your message here..."
             rows={4}
-            style={{ ...textAreaStyle, minHeight: 80, marginTop: 8 }}
+            style={{ ...textAreaStyle, minHeight: 88, marginTop: 8 }}
           />
         </div>
 
@@ -463,112 +477,91 @@ function PlaygroundPanel({
           </div>
         )}
 
-        <div
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", paddingTop: 2 }}>
+            <GhostButton onClick={onAddMessage}>+ Message</GhostButton>
+            <GhostButton onClick={() => {}} disabled>
+              + Tool
+            </GhostButton>
+          </div>
+        </div>
+
+        <aside
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap"
+            flexDirection: "column",
+            gap: 12,
+            minWidth: 0,
+            padding: 14,
+            border: `1px solid ${T.line}`,
+            borderRadius: 10,
+            background: T.ghost,
+            boxSizing: "border-box"
           }}
         >
-          <GhostButton onClick={onAddMessage}>+ Message</GhostButton>
-          <GhostButton onClick={() => {}} disabled>
-            + Tool
-          </GhostButton>
-          <OutputPill />
-          <div style={{ marginLeft: "auto" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <div>
+              <p style={{ margin: 0, color: T.ink, fontFamily: T.dm, fontSize: 14, fontWeight: 700 }}>Response</p>
+              <p style={{ margin: "2px 0 0", color: T.muted, fontFamily: T.dm, fontSize: 12 }}>Generated output appears here</p>
+            </div>
+            <OutputPill />
+          </div>
+
+          <div style={responseBoxStyle}>
+            {variant.error ? (
+              <span style={{ color: T.error }}>{variant.error}</span>
+            ) : variant.isRunning ? (
+              "Running..."
+            ) : variant.response ? (
+              variant.response
+            ) : (
+              <span style={{ color: T.muted }}>Run the prompt to preview the response.</span>
+            )}
+          </div>
+
+          {(variant.latencyMs != null || variant.tokenCount != null) && !variant.error && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {variant.latencyMs != null && (
+                <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 8px", borderRadius: 999, background: T.surface, color: T.muted, fontFamily: T.dm, fontSize: 12, fontWeight: 500 }}>
+                  {formatLatency(variant.latencyMs)}
+                </span>
+              )}
+              {variant.tokenCount != null && (
+                <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 8px", borderRadius: 999, background: T.surface, color: T.muted, fontFamily: T.dm, fontSize: 12, fontWeight: 500 }}>
+                  {formatTokenCount(variant.tokenCount)}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: "auto", paddingTop: 2 }}>
+            <button
+              type="button"
+              onClick={onSave}
+              style={{ border: "none", background: "transparent", color: T.accent, fontFamily: T.dm, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 0" }}
+            >
+              Save as repo →
+            </button>
           <button
             type="button"
             onClick={onRun}
             disabled={variant.isRunning}
             style={{
               height: 36,
-              padding: "0 24px",
-              background: variant.isRunning ? T.surface : T.ink,
-              color: variant.isRunning ? T.ink : T.bg,
+              padding: "0 17px",
+              background: variant.isRunning ? T.accentLight : T.accent,
+              color: "#fff",
               border: "none",
-              borderRadius: 6,
+              borderRadius: 8,
               fontFamily: T.dm,
               fontWeight: 700,
               fontSize: 14,
               cursor: variant.isRunning ? "wait" : "pointer"
             }}
           >
-            {variant.isRunning ? "Running..." : "Run ▶"}
+            {variant.isRunning ? "Running..." : "Run prompt"}
           </button>
-        </div>
-
-        <div style={responseBoxStyle}>
-          {variant.error ? (
-            <span style={{ color: T.error }}>{variant.error}</span>
-          ) : variant.isRunning ? (
-            "Running..."
-          ) : variant.response ? (
-            variant.response
-          ) : (
-            <span style={{ color: T.muted }}>Click run to generate</span>
-          )}
-        </div>
-
-        {(variant.latencyMs != null || variant.tokenCount != null) && !variant.error && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {variant.latencyMs != null && (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  height: 24,
-                  padding: "0 8px",
-                  borderRadius: 999,
-                  background: T.ghost,
-                  color: T.muted,
-                  fontFamily: T.dm,
-                  fontSize: 12,
-                  fontWeight: 500
-                }}
-              >
-                {formatLatency(variant.latencyMs)}
-              </span>
-            )}
-            {variant.tokenCount != null && (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  height: 24,
-                  padding: "0 8px",
-                  borderRadius: 999,
-                  background: T.ghost,
-                  color: T.muted,
-                  fontFamily: T.dm,
-                  fontSize: 12,
-                  fontWeight: 500
-                }}
-              >
-                {formatTokenCount(variant.tokenCount)}
-              </span>
-            )}
           </div>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={onSave}
-            style={{
-              border: "none",
-              background: "transparent",
-              color: T.accent,
-              fontFamily: T.dm,
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: "pointer",
-              padding: "6px 0"
-            }}
-          >
-            Save as repo →
-          </button>
-        </div>
+        </aside>
       </div>
     </section>
   );
@@ -1163,7 +1156,7 @@ export default function PlaygroundShell({ canCreateRepos }: PlaygroundShellProps
       }
     : {
         width: "100%",
-        maxWidth: 720,
+        maxWidth: 1160,
         margin: "0 auto"
       };
 
@@ -1192,48 +1185,51 @@ export default function PlaygroundShell({ canCreateRepos }: PlaygroundShellProps
       >
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            padding: "20px 24px 18px"
+            padding: "20px 24px 14px"
           }}
         >
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: T.dm,
-              fontSize: 22,
-              fontWeight: 700,
-              color: T.ink,
-              lineHeight: 1
-            }}
-          >
-            Playground
-          </h1>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {compareMode && (
-              <button
-                type="button"
-                onClick={runAll}
+          <div style={{ ...mainWidthStyle, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <div>
+              <h1
                 style={{
-                  height: 36,
-                  padding: "0 16px",
-                  border: "none",
-                  borderRadius: 6,
-                  background: T.ink,
-                  color: T.bg,
+                  margin: 0,
                   fontFamily: T.dm,
-                  fontSize: 14,
+                  fontSize: 22,
                   fontWeight: 700,
-                  cursor: "pointer"
+                  color: T.ink,
+                  lineHeight: 1
                 }}
               >
-                Run all
-              </button>
-            )}
-            <AddButton onClick={addVariant}>+ Add variant</AddButton>
+                Playground
+              </h1>
+              <p style={{ margin: "6px 0 0", color: T.muted, fontFamily: T.dm, fontSize: 13 }}>
+                Draft, test, and compare prompt responses.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {compareMode && (
+                <button
+                  type="button"
+                  onClick={runAll}
+                  style={{
+                    height: 36,
+                    padding: "0 15px",
+                    border: `1px solid ${T.line}`,
+                    borderRadius: 8,
+                    background: T.surface,
+                    color: T.ink,
+                    fontFamily: T.dm,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  Run all
+                </button>
+              )}
+              <AddButton onClick={addVariant}>+ Add variant</AddButton>
+            </div>
           </div>
         </div>
 
@@ -1242,7 +1238,7 @@ export default function PlaygroundShell({ canCreateRepos }: PlaygroundShellProps
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: compareMode ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 720px)",
+                gridTemplateColumns: compareMode ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 1fr)",
                 gap: 16,
                 alignItems: "start"
               }}
@@ -1251,6 +1247,7 @@ export default function PlaygroundShell({ canCreateRepos }: PlaygroundShellProps
                 <PlaygroundPanel
                   key={index}
                   variant={variant}
+                  compact={compareMode}
                   onChange={(patch) => updateVariant(index, patch)}
                   onAddMessage={() => addMessage(index)}
                   onRun={() => void runVariant(index)}
