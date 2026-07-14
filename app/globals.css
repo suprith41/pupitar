@@ -1434,6 +1434,86 @@ select:focus-visible {
 .landing-secondary-cta:hover { border-color: #9bb9f8; background: #fff; color: #2067ff; }
 .landing-final-cta:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0,0,0,.18); }
 
+.landing-closing-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #0b5fd7;
+}
+
+.landing-closing-cta::before,
+.landing-closing-cta::after {
+  position: absolute;
+  z-index: -1;
+  display: block;
+  width: 44rem;
+  height: 34rem;
+  background-image: conic-gradient(from 90deg at .5rem .5rem, transparent 25%, rgba(191,216,255,.28) 0 50%, transparent 0 75%, rgba(191,216,255,.28) 0);
+  background-position: 0 0;
+  background-repeat: repeat;
+  background-size: 1rem 1rem;
+  content: "";
+  image-rendering: pixelated;
+  opacity: .68;
+}
+
+.landing-closing-cta::before {
+  top: -10rem;
+  left: -16rem;
+  clip-path: polygon(0 0, 46% 0, 46% 22%, 62% 22%, 62% 46%, 82% 46%, 82% 67%, 100% 67%, 100% 100%, 0 100%);
+  transform: rotate(0deg);
+}
+
+.landing-closing-cta::after {
+  right: -18rem;
+  bottom: -12rem;
+  clip-path: polygon(0 34%, 19% 34%, 19% 13%, 40% 13%, 40% 37%, 58% 37%, 58% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.landing-closing-cta-inner { position: relative; z-index: 1; }
+
+.landing-closing-eyebrow {
+  margin: 0;
+  color: rgba(255,255,255,.7);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+}
+
+.landing-closing-cta .landing-final-cta {
+  min-width: 150px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 8px;
+  box-shadow: 0 8px 0 rgba(5,45,121,.32);
+}
+
+.landing-closing-cta .landing-final-cta:hover {
+  box-shadow: 0 11px 0 rgba(5,45,121,.27), 0 16px 26px rgba(5,45,121,.2);
+}
+
+.landing-site-footer {
+  border-top: 1px solid #dfe7f3;
+  background: #f8fbff;
+  color: #13233c;
+}
+
+.landing-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10213b;
+  font-size: 19px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.landing-footer-note { margin: 0; color: #697b94; font-size: 12px; }
+.landing-footer-links { display: flex; gap: 24px; color: #536985; font-size: 13px; }
+.landing-footer-links a { color: inherit; text-decoration: none; transition: color 160ms ease; }
+.landing-footer-links a:hover { color: #0b5fd7; }
+
 .landing-hero-kicker,
 .landing-section-kicker {
   color: #2067ff;

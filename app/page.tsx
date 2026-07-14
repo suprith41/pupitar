@@ -386,20 +386,20 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-[#2067ff] px-5 py-24 text-white md:px-8 md:py-32">
-        <div className="mx-auto max-w-[900px] text-center" data-landing-reveal>
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">Build with confidence</p>
-          <h2 className="mt-6 text-[48px] font-bold leading-[0.98] tracking-[-0.05em] md:text-[82px]">Your next prompt should have a history.</h2>
-          <p className="mx-auto mt-6 max-w-[570px] text-[18px] leading-[1.6] text-white/70">Create the repo, test the behavior, and ship the version you trust.</p>
+      <section className="landing-closing-cta px-5 py-24 text-white md:px-8 md:py-32">
+        <div className="landing-closing-cta-inner mx-auto max-w-[900px] text-center" data-landing-reveal>
+          <p className="landing-closing-eyebrow">Ready for a better release process?</p>
+          <h2 className="mt-5 text-[46px] font-bold leading-[0.98] tracking-[-0.05em] md:text-[78px]">Your next prompt<br className="hidden md:block" /> should have a history.</h2>
+          <p className="mx-auto mt-6 max-w-[570px] text-[18px] leading-[1.6] text-white/80">Create the repo, test the behavior, and ship the version you trust.</p>
           <Link href={primaryHref} className="landing-final-cta mt-9">Open Pupitar <ArrowIcon /></Link>
         </div>
       </section>
 
-      <footer className="border-t border-[#dfe3ea] bg-white px-5 py-8 text-[#111827] md:px-8">
+      <footer className="landing-site-footer px-5 py-8 md:px-8">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <Link href="/" className="flex items-center gap-2 text-[19px] font-bold"><PupitarLogo size={25} /> Pupitar</Link>
-          <p className="text-[12px] text-[#8a93a3]">Version control for production prompts.</p>
-          <div className="flex gap-6 text-[13px] text-[#667085]"><a href="#product">Product</a><Link href="/explore">Explore</Link><a href="#faqs">FAQs</a></div>
+          <Link href="/" className="landing-footer-brand"><PupitarLogo size={25} /> Pupitar</Link>
+          <p className="landing-footer-note">Version control for production prompts.</p>
+          <div className="landing-footer-links"><a href="#product">Product</a><Link href="/explore">Explore</Link><a href="#faqs">FAQs</a></div>
         </div>
       </footer>
     </main>
