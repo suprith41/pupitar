@@ -547,9 +547,345 @@ body {
   50% { transform: translateY(-4px) rotate(-1deg); }
 }
 
+@keyframes dashboard-card-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboard-sparkline-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+.dashboard-motion-enter {
+  animation: dashboard-card-in 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dashboard-quick-actions .dashboard-motion-enter:nth-child(1),
+.dashboard-stat-grid .dashboard-motion-enter:nth-child(1),
+.dashboard-repo-grid .dashboard-motion-enter:nth-child(1) {
+  animation-delay: 50ms;
+}
+
+.dashboard-quick-actions .dashboard-motion-enter:nth-child(2),
+.dashboard-stat-grid .dashboard-motion-enter:nth-child(2),
+.dashboard-repo-grid .dashboard-motion-enter:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.dashboard-quick-actions .dashboard-motion-enter:nth-child(3),
+.dashboard-stat-grid .dashboard-motion-enter:nth-child(3),
+.dashboard-repo-grid .dashboard-motion-enter:nth-child(3) {
+  animation-delay: 150ms;
+}
+
+.dashboard-quick-actions .dashboard-motion-enter:nth-child(4),
+.dashboard-stat-grid .dashboard-motion-enter:nth-child(4) {
+  animation-delay: 200ms;
+}
+
+.dashboard-quick-action,
+.dashboard-repo-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease !important;
+}
+
+.dashboard-quick-action::before {
+  position: absolute;
+  top: -45%;
+  bottom: -45%;
+  left: -38%;
+  width: 25%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--dash-accent) 18%, transparent), transparent);
+  content: "";
+  pointer-events: none;
+  transform: skewX(-18deg);
+  transition: left 560ms ease;
+}
+
+.dashboard-quick-action:hover,
+.dashboard-repo-card:hover {
+  box-shadow: var(--dash-shadow-hover);
+  transform: translateY(-4px);
+}
+
+.dashboard-quick-action:hover::before {
+  left: 118%;
+}
+
+.dashboard-quick-action-icon,
+.dashboard-quick-action-arrow {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), color 180ms ease;
+}
+
+.dashboard-quick-action:hover .dashboard-quick-action-icon {
+  transform: translateY(-2px) rotate(-5deg) scale(1.08);
+}
+
+.dashboard-quick-action:hover .dashboard-quick-action-arrow {
+  color: var(--dash-accent) !important;
+  transform: translate(3px, -3px);
+}
+
+.dashboard-stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-stat-card::after {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  left: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--dash-accent), transparent);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition: opacity 220ms ease, transform 320ms ease;
+}
+
+.dashboard-stat-card:hover::after {
+  opacity: 0.8;
+  transform: scaleX(1);
+}
+
+.dashboard-sparkline-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dashboard-sparkline-draw 750ms ease-out 280ms both;
+}
+
+@keyframes dashboard-pipeline-float {
+  0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+  50% { transform: translateY(-6px) rotate(0.5deg); }
+}
+
+@keyframes dashboard-pipeline-glow {
+  0%, 100% { opacity: 0.32; transform: scale(0.9); }
+  50% { opacity: 0.7; transform: scale(1.08); }
+}
+
+@keyframes dashboard-pipeline-scan {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(310%); }
+}
+
+@keyframes dashboard-pipeline-signal {
+  0% { left: -4px; opacity: 0; }
+  15%, 75% { opacity: 1; }
+  100% { left: calc(100% - 3px); opacity: 0; }
+}
+
+@keyframes dashboard-pipeline-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.dashboard-pipeline-visual {
+  position: absolute;
+  top: 21px;
+  right: 34px;
+  width: 350px;
+  height: 106px;
+  pointer-events: none;
+  animation: dashboard-pipeline-float 5.5s ease-in-out infinite;
+}
+
+.dashboard-pipeline-glow {
+  position: absolute;
+  top: -28px;
+  right: 20px;
+  width: 240px;
+  height: 112px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dash-accent) 20%, transparent);
+  filter: blur(28px);
+  animation: dashboard-pipeline-glow 3.6s ease-in-out infinite;
+}
+
+.dashboard-pipeline-console {
+  position: relative;
+  width: 218px;
+  margin-left: auto;
+  overflow: hidden;
+  border: 1px solid var(--dash-line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--dash-surface) 88%, transparent);
+  box-shadow: var(--dash-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-pipeline-console::after {
+  position: absolute;
+  inset: 0 auto 0 -45%;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--dash-accent) 13%, transparent), transparent);
+  content: "";
+  transform: skewX(-16deg);
+  animation: dashboard-pipeline-scan 3.2s ease-in-out infinite;
+}
+
+.dashboard-pipeline-console-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--dash-line);
+}
+
+.dashboard-pipeline-console-bar > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dash-subtle);
+}
+
+.dashboard-pipeline-console-bar > span:first-child {
+  background: var(--dash-accent);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--dash-accent) 70%, transparent);
+  animation: dashboard-pipeline-blink 1.5s ease-in-out infinite;
+}
+
+.dashboard-pipeline-console-bar b {
+  margin-left: auto;
+  color: var(--dash-success);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+.dashboard-pipeline-console-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+}
+
+.dashboard-pipeline-code {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-pipeline-code span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--dash-line);
+}
+
+.dashboard-pipeline-code span:nth-child(2) { width: 72%; }
+.dashboard-pipeline-code span:nth-child(3) { width: 86%; background: var(--dash-accent-soft); }
+
+.dashboard-pipeline-running {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--dash-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.dashboard-pipeline-running i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dash-success);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--dash-success) 70%, transparent);
+  animation: dashboard-pipeline-blink 1.1s ease-in-out infinite;
+}
+
+.dashboard-pipeline-track {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-pipeline-node {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--dash-line);
+  border-radius: 999px;
+  background: var(--dash-surface);
+  color: var(--dash-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-pipeline-node.is-active {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+  color: var(--dash-accent);
+}
+
+.dashboard-pipeline-link {
+  position: relative;
+  flex: 1;
+  height: 1px;
+  overflow: visible;
+  background: var(--dash-line);
+}
+
+.dashboard-pipeline-link i {
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  box-shadow: 0 0 10px var(--dash-accent);
+  animation: dashboard-pipeline-signal 1.8s ease-in-out infinite;
+}
+
+.dashboard-pipeline-link:nth-of-type(4) i {
+  animation-delay: 0.9s;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-pipeline-visual {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-empty-float {
+  .dashboard-empty-float,
+  .dashboard-motion-enter,
+  .dashboard-sparkline-path,
+  .dashboard-pipeline-visual,
+  .dashboard-pipeline-glow,
+  .dashboard-pipeline-console::after,
+  .dashboard-pipeline-console-bar > span:first-child,
+  .dashboard-pipeline-running i,
+  .dashboard-pipeline-link i {
     animation: none;
+  }
+
+  .dashboard-quick-action:hover,
+  .dashboard-repo-card:hover {
+    transform: none;
   }
 }
 

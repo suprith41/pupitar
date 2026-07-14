@@ -1362,6 +1362,7 @@ function StatCard({
 }) {
   return (
     <div
+      className="dashboard-stat-card dashboard-motion-enter"
       style={{
         background: T.surface,
         border: `1px solid ${T.line}`,
@@ -1461,6 +1462,35 @@ function QuickScienceIcon() {
   );
 }
 
+function DashboardPipelineAnimation() {
+  return (
+    <div className="dashboard-pipeline-visual" aria-hidden="true">
+      <div className="dashboard-pipeline-glow" />
+      <div className="dashboard-pipeline-console">
+        <div className="dashboard-pipeline-console-bar">
+          <span /><span /><span />
+          <b>LIVE</b>
+        </div>
+        <div className="dashboard-pipeline-console-body">
+          <div className="dashboard-pipeline-code">
+            <span /><span /><span />
+          </div>
+          <div className="dashboard-pipeline-running">
+            <i /> compiling prompt
+          </div>
+        </div>
+      </div>
+      <div className="dashboard-pipeline-track">
+        <span className="dashboard-pipeline-node is-active">Prompt</span>
+        <span className="dashboard-pipeline-link"><i /></span>
+        <span className="dashboard-pipeline-node">Version</span>
+        <span className="dashboard-pipeline-link"><i /></span>
+        <span className="dashboard-pipeline-node">Eval</span>
+      </div>
+    </div>
+  );
+}
+
 function QuickActionCard({
   icon: Icon,
   title,
@@ -1476,6 +1506,7 @@ function QuickActionCard({
   return (
     <button
       type="button"
+      className="dashboard-quick-action dashboard-motion-enter"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -1489,14 +1520,14 @@ function QuickActionCard({
         cursor: "pointer"
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", height: 24, marginBottom: 10 }}>
+      <div className="dashboard-quick-action-icon" style={{ display: "flex", alignItems: "center", height: 24, marginBottom: 10 }}>
         <Icon />
       </div>
       <div style={{ fontFamily: T.dm, fontSize: 15, fontWeight: 600, color: T.ink }}>{title}</div>
       <p style={{ margin: "6px 0 0", fontFamily: T.dm, fontSize: 13, lineHeight: 1.5, color: T.muted }}>
         {description}
       </p>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18, fontFamily: T.dm, color: T.muted }}>
+      <div className="dashboard-quick-action-arrow" style={{ display: "flex", justifyContent: "flex-end", marginTop: 18, fontFamily: T.dm, color: T.muted }}>
         ↗
       </div>
     </button>
@@ -1544,6 +1575,7 @@ function RepoCard({
   return (
     <button
       type="button"
+      className="dashboard-repo-card dashboard-motion-enter"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -1620,7 +1652,7 @@ function Sparkline({
 
   return (
     <svg width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none" style={{ marginTop: 10 }}>
-      <path d={getSparklinePoints(values)} fill="none" stroke={T.accent} strokeWidth="2" strokeLinecap="round" />
+      <path className="dashboard-sparkline-path" d={getSparklinePoints(values)} fill="none" stroke={T.accent} strokeWidth="2" strokeLinecap="round" pathLength="1" />
     </svg>
   );
 }
@@ -1960,7 +1992,7 @@ export default function DashboardShell({
           overflowY: "auto"
         }}
       >
-        <div style={{ padding: "24px" }}>
+        <div className="dashboard-home" style={{ padding: "24px" }}>
           <div style={{ maxWidth: 1280 }}>
             {initialErrorMessage && (
               <div
@@ -1981,6 +2013,7 @@ export default function DashboardShell({
 
             {!welcomeDismissed && (
               <section
+                className="dashboard-welcome dashboard-motion-enter"
                 style={{
                   position: "relative",
                   width: "100%",
@@ -2000,7 +2033,10 @@ export default function DashboardShell({
                   </h1>
                 </div>
 
+                <DashboardPipelineAnimation />
+
                 <div
+                  className="dashboard-quick-actions"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
@@ -2053,6 +2089,7 @@ export default function DashboardShell({
               </div>
 
               <div
+                className="dashboard-stat-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
@@ -2119,6 +2156,7 @@ export default function DashboardShell({
                 />
               ) : (
                 <div
+                  className="dashboard-repo-grid"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
