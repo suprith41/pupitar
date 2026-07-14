@@ -1482,35 +1482,6 @@ function QuickScienceIcon() {
   );
 }
 
-function DashboardPipelineAnimation() {
-  return (
-    <div className="dashboard-pipeline-visual" aria-hidden="true">
-      <div className="dashboard-pipeline-glow" />
-      <div className="dashboard-pipeline-console">
-        <div className="dashboard-pipeline-console-bar">
-          <span /><span /><span />
-          <b>LIVE</b>
-        </div>
-        <div className="dashboard-pipeline-console-body">
-          <div className="dashboard-pipeline-code">
-            <span /><span /><span />
-          </div>
-          <div className="dashboard-pipeline-running">
-            <i /> compiling prompt
-          </div>
-        </div>
-      </div>
-      <div className="dashboard-pipeline-track">
-        <span className="dashboard-pipeline-node is-active">Prompt</span>
-        <span className="dashboard-pipeline-link"><i /></span>
-        <span className="dashboard-pipeline-node">Version</span>
-        <span className="dashboard-pipeline-link"><i /></span>
-        <span className="dashboard-pipeline-node">Eval</span>
-      </div>
-    </div>
-  );
-}
-
 function QuickActionCard({
   icon: Icon,
   title,
@@ -2052,8 +2023,6 @@ export default function DashboardShell({
                     {displayName}
                   </h1>
                 </div>
-
-                <DashboardPipelineAnimation />
 
                 <div
                   className="dashboard-quick-actions"
