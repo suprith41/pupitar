@@ -42,6 +42,11 @@ export function useDashboardTheme() {
 export function DashboardThemeSurface({ children }: { children: React.ReactNode }) {
   const { theme } = useDashboardTheme();
 
+  useLayoutEffect(() => {
+    document.documentElement.dataset.dashboardTheme = theme;
+    document.body.dataset.dashboardTheme = theme;
+  }, [theme]);
+
   return (
     <div className="pupitar-dashboard dashboard-developer-ui min-h-screen" data-dashboard-theme={theme}>
       {children}

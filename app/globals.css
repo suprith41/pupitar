@@ -40,6 +40,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html[data-dashboard-theme="dark"],
+html[data-dashboard-theme="dark"] body {
+  background: #0d1117;
+}
+
+html[data-dashboard-theme="light"],
+html[data-dashboard-theme="light"] body {
+  background: #f6f8fa;
+}
+
 ::placeholder {
   color: var(--color-muted);
   opacity: 1;
@@ -307,32 +317,6 @@ body {
 .dashboard-developer-ui ::selection {
   background: var(--dash-accent-soft);
   color: var(--dash-ink);
-}
-
-::view-transition-old(root) {
-  animation: dashboard-route-out 160ms ease-out both;
-}
-
-::view-transition-new(root) {
-  animation: dashboard-route-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes dashboard-route-out {
-  to {
-    opacity: 0;
-    transform: translateY(-1px);
-  }
-}
-
-@keyframes dashboard-route-in {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .dashboard-developer-ui ::-webkit-scrollbar-track {

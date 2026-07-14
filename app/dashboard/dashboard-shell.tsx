@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ComponentType, FormEvent, MouseEvent as ReactMouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ComponentType, FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -227,10 +227,6 @@ const NAV_ITEMS = [
 const SIDEBAR_STORAGE_KEY = "pupitar-dashboard-sidebar-collapsed";
 let sidebarCollapsedCache: boolean | null = null;
 
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => unknown;
-};
-
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
@@ -258,26 +254,14 @@ function NavItem({
   collapsed: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   // Home is active when exactly on /dashboard; others match prefix
   const isActive =
     href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
   const [hovered, setHovered] = useState(false);
 
-  function handleNavigation(event: ReactMouseEvent<HTMLAnchorElement>) {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-
-    const startViewTransition = (document as ViewTransitionDocument).startViewTransition;
-    if (!startViewTransition) return;
-
-    event.preventDefault();
-    startViewTransition.call(document, () => router.push(href));
-  }
-
   return (
     <Link
       href={href}
-      onClick={handleNavigation}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
