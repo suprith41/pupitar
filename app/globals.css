@@ -1293,13 +1293,15 @@ select:focus-visible {
   min-height: 100vh;
   min-height: 100svh;
   flex-direction: column;
+  background: #0073e6;
 }
 
 .landing-hero-cityscape {
   position: absolute;
   inset: 0;
+  opacity: 1;
   pointer-events: none;
-  background: #9bd3f7;
+  background: #0073e6;
 }
 
 .landing-hero-cityscape img {

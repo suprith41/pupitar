@@ -273,17 +273,17 @@ export default function Home() {
         <div className="landing-hero-content relative z-10 mx-auto w-full max-w-[1200px] px-5 py-12 md:px-8 md:py-16">
           <div className="mx-auto max-w-[900px] text-center">
             <div className="landing-hero-kicker mx-auto"><span /> Version control for production prompts</div>
-            <h1 className="mt-7 text-[52px] font-bold leading-[0.98] tracking-[-0.055em] md:text-[82px] lg:text-[92px]">
-              Prompts deserve<br /><span className="text-[#2067ff]">a serious workflow.</span>
+            <h1 className="mt-7 text-[44px] font-bold leading-[1.02] tracking-[-0.05em] md:text-[68px] lg:text-[76px]">
+              The unified workspace for<br /><span className="text-[#2067ff]">prompt engineers.</span>
             </h1>
-            <p className="mx-auto mt-7 max-w-[660px] text-[18px] leading-[1.6] text-[#667085] md:text-[21px]">
+            <p className="mx-auto mt-7 max-w-[660px] text-[18px] leading-[1.6] text-white md:text-[21px]">
               Branch, evaluate, review, and deploy AI prompts with the discipline you already bring to code.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href={primaryHref} className="landing-primary-cta">Start building <ArrowIcon /></Link>
               <Link href="/explore" className="landing-secondary-cta">Explore public repos</Link>
             </div>
-            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[#98a2b3]">Private by default · Built for iteration</p>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white">Branch instantly · Deploy securely</p>
           </div>
 
         </div>
