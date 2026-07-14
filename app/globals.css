@@ -1317,6 +1317,25 @@ select:focus-visible {
   justify-content: center;
 }
 
+.landing-hero-title,
+.landing-hero-title span {
+  color: #f8fafc;
+}
+
+.landing-hero-title {
+  text-shadow:
+    .018em .018em 0 #1e3a8a,
+    .036em .036em 0 #1e3a8a,
+    .054em .054em 0 #1e3a8a,
+    .072em .072em 0 #1e40af,
+    .09em .09em 0 #1e40af,
+    .108em .108em 0 #1e40af,
+    .126em .126em 0 #1d4ed8,
+    .144em .144em 0 #1d4ed8,
+    .162em .162em 0 #1d4ed8,
+    .2em .23em .13em rgba(15,23,42,.4);
+}
+
 .landing-product-showcase {
   position: relative;
   z-index: 2;
