@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast, type ForkTarget } from "./fork-modal";
 import { Sidebar } from "../dashboard/dashboard-shell";
-import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
 import { StarIcon } from "@/components/star-icon";
 
 export type ExploreRepo = {
@@ -48,11 +47,7 @@ export default function ExploreShell(props: {
   isAuthenticated: boolean;
   initialNote?: string | null;
 }) {
-  return (
-    <DashboardThemeProvider>
-      <ExploreShellContent {...props} />
-    </DashboardThemeProvider>
-  );
+  return <ExploreShellContent {...props} />;
 }
 
 function ExploreShellContent({

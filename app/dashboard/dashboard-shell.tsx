@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ComponentType, FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ComponentType, FormEvent, MouseEvent as ReactMouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/time";
@@ -225,6 +225,11 @@ const NAV_ITEMS = [
 ];
 
 const SIDEBAR_STORAGE_KEY = "pupitar-dashboard-sidebar-collapsed";
+let sidebarCollapsedCache: boolean | null = null;
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => unknown;
+};
 
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   return (
@@ -253,14 +258,26 @@ function NavItem({
   collapsed: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   // Home is active when exactly on /dashboard; others match prefix
   const isActive =
     href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
   const [hovered, setHovered] = useState(false);
 
+  function handleNavigation(event: ReactMouseEvent<HTMLAnchorElement>) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const startViewTransition = (document as ViewTransitionDocument).startViewTransition;
+    if (!startViewTransition) return;
+
+    event.preventDefault();
+    startViewTransition.call(document, () => router.push(href));
+  }
+
   return (
     <Link
       href={href}
+      onClick={handleNavigation}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -306,18 +323,21 @@ export function Sidebar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuHovered, setMenuHovered] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => sidebarCollapsedCache ?? false);
   const [sidebarReady, setSidebarReady] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
-    setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+    const storedCollapsed = window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebarCollapsedCache = storedCollapsed;
+    setCollapsed(storedCollapsed);
     setSidebarReady(true);
   }, []);
 
   function toggleSidebar() {
     setCollapsed((current) => {
       const next = !current;
+      sidebarCollapsedCache = next;
       window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
       if (next) setMenuOpen(false);
       return next;
@@ -348,7 +368,7 @@ export function Sidebar({
         background: T.surface,
         borderRight: `1px solid ${T.line}`,
         overflow: "visible",
-        transition: sidebarReady ? "width 180ms ease" : "none"
+        transition: sidebarReady ? "width 140ms ease-out" : "none"
       }}
     >
       {/* Logo */}

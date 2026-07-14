@@ -309,6 +309,32 @@ body {
   color: var(--dash-ink);
 }
 
+::view-transition-old(root) {
+  animation: dashboard-route-out 80ms ease-out both;
+}
+
+::view-transition-new(root) {
+  animation: dashboard-route-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes dashboard-route-out {
+  to {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes dashboard-route-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .dashboard-developer-ui ::-webkit-scrollbar-track {
   background: var(--dash-bg);
 }

@@ -8,7 +8,6 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ForkModal, ForkSuccessToast } from "../fork-modal";
 import { ExploreNavbar } from "@/components/explore-navbar";
-import { DashboardThemeProvider } from "@/components/dashboard-theme-provider";
 import { StarIcon } from "@/components/star-icon";
 
 type PublicRepo = {
@@ -93,11 +92,7 @@ export default function PublicRepoShell(props: {
   isAuthenticated: boolean;
   initialNote?: string | null;
 }) {
-  return (
-    <DashboardThemeProvider>
-      <PublicRepoShellContent {...props} />
-    </DashboardThemeProvider>
-  );
+  return <PublicRepoShellContent {...props} />;
 }
 
 function PublicRepoShellContent({

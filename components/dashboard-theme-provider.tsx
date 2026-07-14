@@ -28,16 +28,7 @@ export function DashboardThemeProvider({ children }: { children: React.ReactNode
     window.localStorage.setItem(STORAGE_KEY, nextTheme);
   }
 
-  return (
-    <DashboardThemeContext.Provider value={{ theme, setTheme }}>
-      <div
-        className="pupitar-dashboard dashboard-developer-ui min-h-screen"
-        data-dashboard-theme={theme}
-      >
-        {children}
-      </div>
-    </DashboardThemeContext.Provider>
-  );
+  return <DashboardThemeContext.Provider value={{ theme, setTheme }}>{children}</DashboardThemeContext.Provider>;
 }
 
 export function useDashboardTheme() {
@@ -46,4 +37,14 @@ export function useDashboardTheme() {
     throw new Error("useDashboardTheme must be used inside DashboardThemeProvider");
   }
   return context;
+}
+
+export function DashboardThemeSurface({ children }: { children: React.ReactNode }) {
+  const { theme } = useDashboardTheme();
+
+  return (
+    <div className="pupitar-dashboard dashboard-developer-ui min-h-screen" data-dashboard-theme={theme}>
+      {children}
+    </div>
+  );
 }
