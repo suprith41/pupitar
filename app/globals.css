@@ -1359,6 +1359,24 @@ select:focus-visible {
   backdrop-filter: blur(18px);
 }
 
+.landing-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #2b62db;
+  font-family: "Geist Pixel", "Geist Mono", "JetBrains Mono", monospace;
+  font-size: 35px;
+  font-weight: 700;
+  letter-spacing: -.06em;
+  line-height: 1;
+  text-decoration: none;
+  text-shadow: 0 .08em 0 rgba(8,47,113,.38);
+}
+
+.landing-hero-brand span { display: block; }
+
+.landing-header.is-scrolled .landing-hero-brand { color: #10213b; text-shadow: none; }
+
 .landing-nav-link {
   position: relative;
   transition: color 160ms ease;
@@ -1406,10 +1424,10 @@ select:focus-visible {
 .landing-primary-cta {
   min-height: 48px;
   padding: 0 20px;
-  background: #2067ff;
-  color: #fff;
+  background: #fff;
+  color: #111827;
   font-size: 14px;
-  box-shadow: 0 12px 28px rgba(32,103,255,.24);
+  box-shadow: 0 10px 0 rgba(9,55,132,.28), 0 16px 30px rgba(9,55,132,.2);
 }
 
 .landing-secondary-cta {
@@ -1430,7 +1448,7 @@ select:focus-visible {
 }
 
 .landing-header-cta:hover,
-.landing-primary-cta:hover { background: #3477ff; transform: translateY(-2px); }
+.landing-primary-cta:hover { background: #f8fafc; transform: translateY(-2px); }
 .landing-secondary-cta:hover { border-color: #9bb9f8; background: #fff; color: #2067ff; }
 .landing-final-cta:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0,0,0,.18); }
 

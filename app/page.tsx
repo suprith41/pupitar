@@ -245,10 +245,10 @@ export default function Home() {
         </div>
         <header className={`landing-header sticky top-0 z-50 transition-all duration-200 ${isScrolled ? "is-scrolled" : ""}`}>
           <div className="mx-auto flex h-[72px] w-full max-w-[1200px] items-center justify-between px-5 md:px-8">
-            <Link href="/" className="flex items-center gap-2.5 text-[22px] font-bold tracking-[-0.03em] text-[#111827]">
-              <PupitarLogo size={30} /> Pupitar
+            <Link href="/" className="landing-hero-brand">
+              <PupitarLogo size={46} /> <span>Pupitar</span>
             </Link>
-            <nav className="hidden items-center gap-7 text-[14px] font-medium text-[#667085] md:flex">
+            <nav className="hidden items-center gap-7 text-[14px] font-medium text-black md:flex">
               <a href="#product" className="landing-nav-link">Product</a>
               <a href="#workflow" className="landing-nav-link">How it works</a>
               <Link href="/explore" className="landing-nav-link">Explore</Link>
@@ -279,9 +279,8 @@ export default function Home() {
             <p className="mx-auto mt-7 max-w-[660px] text-[18px] leading-[1.6] text-white md:text-[21px]">
               Branch, evaluate, review, and deploy AI prompts with the discipline you already bring to code.
             </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href={primaryHref} className="landing-primary-cta">Start building <ArrowIcon /></Link>
-              <Link href="/explore" className="landing-secondary-cta">Explore public repos</Link>
+            <div className="mt-9 flex items-center justify-center">
+              <Link href={primaryHref} className="landing-primary-cta">Start prompting <ArrowIcon /></Link>
             </div>
             <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white">Branch instantly · Deploy securely</p>
           </div>
