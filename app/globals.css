@@ -1336,6 +1336,17 @@ select:focus-visible {
     .2em .23em .13em rgba(15,23,42,.4);
 }
 
+.landing-hero-enter {
+  animation: landing-hero-slide-up 700ms cubic-bezier(.2,.8,.2,1) both;
+  will-change: opacity, transform;
+}
+
+.landing-hero-enter-1 { animation-delay: 80ms; }
+.landing-hero-enter-2 { animation-delay: 180ms; }
+.landing-hero-enter-3 { animation-delay: 300ms; }
+.landing-hero-enter-4 { animation-delay: 420ms; }
+.landing-hero-enter-5 { animation-delay: 520ms; }
+
 .landing-product-showcase {
   position: relative;
   z-index: 2;
@@ -1689,6 +1700,10 @@ select:focus-visible {
 @keyframes landing-caret { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
 @keyframes landing-progress { from { transform: scaleX(.08); } to { transform: scaleX(1); } }
 @keyframes landing-dash { to { stroke-dashoffset: -160; } }
+@keyframes landing-hero-slide-up {
+  from { opacity: 0; transform: translateY(34px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 @media (max-width: 960px) {
   .landing-product-body { grid-template-columns: 160px minmax(0,1fr); }
@@ -1716,6 +1731,7 @@ select:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   [data-landing-reveal] { opacity: 1; transform: none; transition: none; }
+  .landing-hero-enter { animation: none; }
   .landing-demo-caret,
   .landing-demo-progress i,
   .landing-draw-path,
