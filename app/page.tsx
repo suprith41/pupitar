@@ -178,6 +178,12 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [hasCheckedSession, setHasCheckedSession] = useState(false);
+  const [hasEnteredHero, setHasEnteredHero] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setHasEnteredHero(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -272,17 +278,17 @@ export default function Home() {
 
         <div className="landing-hero-content relative z-10 mx-auto w-full max-w-[1200px] px-5 py-12 md:px-8 md:py-16">
           <div className="mx-auto max-w-[900px] text-center">
-            <div className="landing-hero-kicker landing-hero-enter landing-hero-enter-1 mx-auto"><span /> Version control for production prompts</div>
-            <h1 className="landing-hero-title landing-hero-enter landing-hero-enter-2 mt-7 text-[44px] font-bold leading-[1.02] tracking-[-0.05em] md:text-[68px] lg:text-[76px]">
+            <div className={`landing-hero-kicker landing-hero-enter landing-hero-enter-1 mx-auto ${hasEnteredHero ? "is-active" : ""}`}><span /> Version control for production prompts</div>
+            <h1 className={`landing-hero-title landing-hero-enter landing-hero-enter-2 mt-7 text-[44px] font-bold leading-[1.02] tracking-[-0.05em] md:text-[68px] lg:text-[76px] ${hasEnteredHero ? "is-active" : ""}`}>
               The unified workspace for<br /><span>prompt engineers.</span>
             </h1>
-            <p className="landing-hero-enter landing-hero-enter-3 mx-auto mt-7 max-w-[660px] text-[18px] leading-[1.6] text-white md:text-[21px]">
+            <p className={`landing-hero-enter landing-hero-enter-3 mx-auto mt-7 max-w-[660px] text-[18px] leading-[1.6] text-white md:text-[21px] ${hasEnteredHero ? "is-active" : ""}`}>
               Branch, evaluate, review, and deploy AI prompts with the discipline you already bring to code.
             </p>
-            <div className="landing-hero-enter landing-hero-enter-4 mt-9 flex items-center justify-center">
+            <div className={`landing-hero-enter landing-hero-enter-4 mt-9 flex items-center justify-center ${hasEnteredHero ? "is-active" : ""}`}>
               <Link href={primaryHref} className="landing-primary-cta">Start prompting <ArrowIcon /></Link>
             </div>
-            <p className="landing-hero-enter landing-hero-enter-5 mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white">Branch instantly · Deploy securely</p>
+            <p className={`landing-hero-enter landing-hero-enter-5 mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white ${hasEnteredHero ? "is-active" : ""}`}>Branch instantly · Deploy securely</p>
           </div>
 
         </div>

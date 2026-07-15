@@ -1337,15 +1337,20 @@ select:focus-visible {
 }
 
 .landing-hero-enter {
-  animation: landing-hero-slide-up 700ms cubic-bezier(.2,.8,.2,1) both;
+  opacity: 0;
+  transform: translateY(34px);
   will-change: opacity, transform;
 }
 
-.landing-hero-enter-1 { animation-delay: 80ms; }
-.landing-hero-enter-2 { animation-delay: 180ms; }
-.landing-hero-enter-3 { animation-delay: 300ms; }
-.landing-hero-enter-4 { animation-delay: 420ms; }
-.landing-hero-enter-5 { animation-delay: 520ms; }
+.landing-hero-enter.is-active {
+  animation: landing-hero-slide-up 900ms cubic-bezier(.16,1,.3,1) both;
+}
+
+.landing-hero-enter-1 { animation-delay: 100ms; }
+.landing-hero-enter-2 { animation-delay: 220ms; }
+.landing-hero-enter-3 { animation-delay: 340ms; }
+.landing-hero-enter-4 { animation-delay: 460ms; }
+.landing-hero-enter-5 { animation-delay: 580ms; }
 
 .landing-product-showcase {
   position: relative;
@@ -1731,7 +1736,7 @@ select:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   [data-landing-reveal] { opacity: 1; transform: none; transition: none; }
-  .landing-hero-enter { animation: none; }
+  .landing-hero-enter { opacity: 1; transform: none; animation: none; }
   .landing-demo-caret,
   .landing-demo-progress i,
   .landing-draw-path,
