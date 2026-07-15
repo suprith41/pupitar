@@ -244,11 +244,11 @@ export default function Home() {
           />
         </div>
         <header className={`landing-header sticky top-0 z-50 transition-all duration-200 ${isScrolled ? "is-scrolled" : ""}`}>
-          <div className="mx-auto flex h-[72px] w-full max-w-[1200px] items-center justify-between px-5 md:px-8">
+          <div className="relative mx-auto flex h-[72px] w-full max-w-[1200px] items-center justify-between px-5 md:px-8">
             <Link href="/" className="landing-hero-brand">
               <PupitarLogo size={46} /> <span>Pupitar</span>
             </Link>
-            <nav className="hidden items-center gap-7 text-[14px] font-medium text-black md:flex">
+            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 whitespace-nowrap text-[14px] font-medium text-black md:flex">
               <a href="#product" className="landing-nav-link">Product</a>
               <a href="#workflow" className="landing-nav-link">How it works</a>
               <Link href="/explore" className="landing-nav-link">Explore</Link>
